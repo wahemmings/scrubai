@@ -1,14 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import { Subscription } from "@/hooks/useSubscription";
 
-export interface SubscriptionStatus {
-  subscribed: boolean;
-  plan_type: string | null;
-  current_period_end: string | null;
-}
-
-export const checkSubscriptionStatus = async (): Promise<SubscriptionStatus> => {
+export const checkSubscriptionStatus = async (): Promise<Subscription> => {
   try {
     const { data, error } = await supabase.functions.invoke('check-subscription');
     
@@ -17,7 +12,7 @@ export const checkSubscriptionStatus = async (): Promise<SubscriptionStatus> => 
       return { subscribed: false, plan_type: null, current_period_end: null };
     }
     
-    return data as SubscriptionStatus;
+    return data as Subscription;
   } catch (error) {
     console.error('Error checking subscription:', error);
     return { subscribed: false, plan_type: null, current_period_end: null };

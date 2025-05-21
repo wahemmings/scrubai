@@ -1,12 +1,18 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { checkSubscriptionStatus, SubscriptionStatus } from '@/services/subscriptionService';
+import { checkSubscriptionStatus } from '@/services/subscriptionService';
+
+export interface Subscription {
+  subscribed: boolean;
+  plan_type: string | null;
+  current_period_end: string | null;
+}
 
 export const useSubscription = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [subscription, setSubscription] = useState<SubscriptionStatus>({
+  const [subscription, setSubscription] = useState<Subscription>({
     subscribed: false,
     plan_type: null,
     current_period_end: null,
