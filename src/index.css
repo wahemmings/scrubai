@@ -37,33 +37,42 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 222 47% 11%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 222 47% 11%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217.2 91.2% 59.8%;
+    --primary: 217 91% 60%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 217 32% 17%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 217 32% 17%;
+    --muted-foreground: 215 20% 75%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 217 32% 17%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 63% 41%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border: 217 32% 17%;
+    --input: 217 32% 17%;
     --ring: 212.7 26.8% 83.9%;
+
+    --sidebar-background: 222 47% 8%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
+    --sidebar-accent: 217 32% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 32% 20%;
+    --sidebar-ring: 212.7 26.8% 83.9%;
   }
 }
 
@@ -78,14 +87,15 @@
   }
 
   .pane-wrapper {
-    @apply relative border rounded-lg overflow-hidden bg-white shadow-sm;
+    @apply relative border rounded-lg overflow-hidden bg-white dark:bg-card shadow-sm;
   }
 }
 
 .dropzone {
-  @apply border-2 border-dashed rounded-lg p-8 transition-all cursor-pointer hover:border-scrub-blue/70 hover:bg-scrub-blue/5;
+  @apply border-2 border-dashed rounded-lg p-8 transition-all cursor-pointer hover:border-scrub-blue/70 hover:bg-scrub-blue/5 dark:hover:border-scrub-blue/60 dark:hover:bg-scrub-blue/10;
 }
 
 .dropzone-active {
-  @apply border-scrub-blue bg-scrub-blue/10;
+  @apply border-scrub-blue bg-scrub-blue/10 dark:bg-scrub-blue/20;
 }
+
