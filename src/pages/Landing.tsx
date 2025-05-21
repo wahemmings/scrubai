@@ -1,16 +1,12 @@
-
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Check, Badge } from "lucide-react";
 import HeroUploadDemo from "@/components/demos/HeroUploadDemo";
-
-// We'll add this mock auth state until Supabase is integrated
-const mockAuthState = {
-  isAuthenticated: false, // Change to true to test authenticated state
-};
+import { useAuth } from "@/hooks/useAuth";
 
 const Landing = () => {
-  const { isAuthenticated } = mockAuthState;
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
   
   return (
     <div>
@@ -34,7 +30,7 @@ const Landing = () => {
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" asChild>
-                  <Link to={isAuthenticated ? "/app" : "/app"}>Get Started</Link>
+                  <Link to={isAuthenticated ? "/app" : "/auth?tab=signup"}>Get Started</Link>
                 </Button>
                 {isAuthenticated && (
                   <Button variant="outline" size="lg" asChild>
@@ -144,7 +140,7 @@ const Landing = () => {
                 ))}
               </ul>
               <Button className="mt-8" asChild>
-                <Link to={isAuthenticated ? "/app" : "/app"}>Get started{isAuthenticated ? "" : " for free"}</Link>
+                <Link to={isAuthenticated ? "/app" : "/auth?tab=signup"}>Get started{isAuthenticated ? "" : " for free"}</Link>
               </Button>
             </div>
             <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border shadow-sm">
@@ -167,7 +163,7 @@ const Landing = () => {
               Start using ScrubAI today and ensure your content remains fingerprint-free.
             </p>
             <Button size="lg" variant="outline" className="mt-8 bg-white text-scrub-blue hover:bg-blue-50" asChild>
-              <Link to={isAuthenticated ? "/app" : "/app"}>
+              <Link to={isAuthenticated ? "/app" : "/auth?tab=signup"}>
                 {isAuthenticated ? "Open Dashboard" : "Try ScrubAI for free"}
               </Link>
             </Button>

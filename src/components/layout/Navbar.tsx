@@ -4,18 +4,14 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
 import { Moon, Sun, Menu, X } from "lucide-react";
-
-// We'll add this mock auth state until Supabase is integrated
-const mockAuthState = {
-  isAuthenticated: false, // Change to true to test authenticated state
-};
+import { useAuth } from "@/hooks/useAuth";
 
 const Navbar = () => {
   const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const isHomePage = location.pathname === "/";
-  const { isAuthenticated } = mockAuthState;
+  const { user, signOut } = useAuth();
 
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light");
@@ -48,22 +44,22 @@ const Navbar = () => {
           </Button>
           
           {isHomePage ? (
-            isAuthenticated ? (
+            user ? (
               <>
                 <Button variant="outline" asChild>
                   <Link to="/app">Open Dashboard</Link>
                 </Button>
-                <Button asChild>
-                  <Link to="/app">Get Started</Link>
+                <Button variant="ghost" onClick={() => signOut()}>
+                  Sign Out
                 </Button>
               </>
             ) : (
               <>
                 <Button variant="ghost" asChild>
-                  <Link to="/app">Sign in</Link>
+                  <Link to="/auth">Sign In</Link>
                 </Button>
                 <Button asChild>
-                  <Link to="/app">Get Started</Link>
+                  <Link to="/auth?tab=signup">Sign Up</Link>
                 </Button>
               </>
             )
@@ -104,22 +100,25 @@ const Navbar = () => {
             </Link>
             <div className="pt-4 border-t">
               {isHomePage ? (
-                isAuthenticated ? (
+                user ? (
                   <div className="flex flex-col gap-3">
                     <Button variant="outline" asChild>
                       <Link to="/app" onClick={() => setIsOpen(false)}>Open Dashboard</Link>
                     </Button>
-                    <Button asChild>
-                      <Link to="/app" onClick={() => setIsOpen(false)}>Get Started</Link>
+                    <Button variant="ghost" onClick={() => {
+                      signOut();
+                      setIsOpen(false);
+                    }}>
+                      Sign Out
                     </Button>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3">
                     <Button variant="outline" asChild>
-                      <Link to="/app" onClick={() => setIsOpen(false)}>Sign in</Link>
+                      <Link to="/auth" onClick={() => setIsOpen(false)}>Sign In</Link>
                     </Button>
                     <Button asChild>
-                      <Link to="/app" onClick={() => setIsOpen(false)}>Get Started</Link>
+                      <Link to="/auth?tab=signup" onClick={() => setIsOpen(false)}>Sign Up</Link>
                     </Button>
                   </div>
                 )
