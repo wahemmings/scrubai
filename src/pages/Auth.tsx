@@ -8,12 +8,15 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
-  const { user, signIn, signUp, signInWithGoogle } = useAuth();
+  const { user, signIn, signUp, signInWithGoogle, resetPassword } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [resetEmail, setResetEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isResetMode, setIsResetMode] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -21,6 +24,16 @@ const Auth = () => {
   // Get the tab from URL query parameter
   const query = new URLSearchParams(location.search);
   const defaultTab = query.get("tab") === "signup" ? "signup" : "signin";
+  const isReset = query.get("reset") === "true";
+
+  useEffect(() => {
+    if (isReset) {
+      toast({
+        title: "Password reset link clicked",
+        description: "Please set your new password below",
+      });
+    }
+  }, [isReset, toast]);
 
   // If user is already authenticated, redirect to app
   if (user) {
@@ -66,6 +79,22 @@ const Auth = () => {
           description: error.message,
         });
       } else {
+        // Create initial credit for new user
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { error: creditsError } = await supabase
+              .from('credits')
+              .insert({ user_id: user.id, amount: 5 });
+            
+            if (creditsError) {
+              console.error('Error creating initial credits:', creditsError);
+            }
+          }
+        } catch (err) {
+          console.error('Error setting up user account:', err);
+        }
+
         toast({
           title: "Check your email",
           description: "We sent you a confirmation link.",
@@ -81,6 +110,78 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      const { error } = await resetPassword(resetEmail);
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Password reset failed",
+          description: error.message,
+        });
+      } else {
+        toast({
+          title: "Password reset email sent",
+          description: "Check your email for the reset link.",
+        });
+        setIsResetMode(false);
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "An error occurred",
+        description: "Please try again later.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isResetMode) {
+    return (
+      <div className="container max-w-md py-12">
+        <Card>
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center">Reset your password</CardTitle>
+            <CardDescription className="text-center">
+              Enter your email and we'll send you a reset link
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handlePasswordReset} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <Input 
+                  id="reset-email" 
+                  type="email" 
+                  placeholder="your@email.com" 
+                  value={resetEmail} 
+                  onChange={(e) => setResetEmail(e.target.value)} 
+                  required 
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Sending..." : "Send Reset Link"}
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              variant="ghost" 
+              className="w-full" 
+              onClick={() => setIsResetMode(false)}
+            >
+              Back to sign in
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-md py-12">
@@ -120,6 +221,14 @@ const Auth = () => {
                     required 
                   />
                 </div>
+                <Button 
+                  type="button" 
+                  variant="link" 
+                  className="p-0 h-auto font-normal text-sm text-right w-full"
+                  onClick={() => setIsResetMode(true)}
+                >
+                  Forgot your password?
+                </Button>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Signing in..." : "Sign In"}
                 </Button>
