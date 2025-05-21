@@ -4,7 +4,14 @@ import { Link } from "react-router-dom";
 import { Check, Badge } from "lucide-react";
 import HeroUploadDemo from "@/components/demos/HeroUploadDemo";
 
+// We'll add this mock auth state until Supabase is integrated
+const mockAuthState = {
+  isAuthenticated: false, // Change to true to test authenticated state
+};
+
 const Landing = () => {
+  const { isAuthenticated } = mockAuthState;
+  
   return (
     <div>
       {/* Hero section */}
@@ -18,8 +25,8 @@ const Landing = () => {
               </div>
               <div className="space-y-4">
                 <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-                  Fingerprint-free content <br />
-                  <span className="text-scrub-blue">in seconds</span>
+                  ScrubAI — Fingerprint‑free <br />
+                  <span className="text-scrub-blue">content in seconds</span>
                 </h1>
                 <p className="text-muted-foreground text-lg md:text-xl">
                   Remove AI watermarks and provenance data from your text, documents, and images with just a few clicks.
@@ -27,11 +34,18 @@ const Landing = () => {
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" asChild>
-                  <Link to="/app">Try for free</Link>
+                  <Link to={isAuthenticated ? "/app" : "/app"}>Get Started</Link>
                 </Button>
-                <Button variant="outline" size="lg" asChild>
-                  <Link to="/pricing">View pricing</Link>
-                </Button>
+                {isAuthenticated && (
+                  <Button variant="outline" size="lg" asChild>
+                    <Link to="/app">Open Dashboard</Link>
+                  </Button>
+                )}
+                {!isAuthenticated && (
+                  <Button variant="outline" size="lg" asChild>
+                    <Link to="/pricing">View pricing</Link>
+                  </Button>
+                )}
               </div>
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-1">
@@ -53,7 +67,7 @@ const Landing = () => {
       </section>
 
       {/* Features section */}
-      <section className="py-16 md:py-24 bg-slate-50">
+      <section className="py-16 md:py-24 bg-slate-50 dark:bg-slate-900/50">
         <div className="container px-4 md:px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
@@ -66,7 +80,7 @@ const Landing = () => {
 
           <div className="grid gap-8 md:grid-cols-3">
             {/* Feature 1 */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border">
               <div className="w-12 h-12 bg-scrub-blue/10 rounded-lg flex items-center justify-center mb-4">
                 <Badge className="h-6 w-6 text-scrub-blue" />
               </div>
@@ -77,7 +91,7 @@ const Landing = () => {
             </div>
             
             {/* Feature 2 */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border">
               <div className="w-12 h-12 bg-scrub-green/10 rounded-lg flex items-center justify-center mb-4">
                 <Check className="h-6 w-6 text-scrub-green" />
               </div>
@@ -88,7 +102,7 @@ const Landing = () => {
             </div>
             
             {/* Feature 3 */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border">
               <div className="w-12 h-12 bg-scrub-amber/10 rounded-lg flex items-center justify-center mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-scrub-amber">
                   <path d="M18 8V7c0-1.1-.9-2-2-2H8a2 2 0 0 0-2 2v1"></path>
@@ -130,11 +144,11 @@ const Landing = () => {
                 ))}
               </ul>
               <Button className="mt-8" asChild>
-                <Link to="/app">Get started for free</Link>
+                <Link to={isAuthenticated ? "/app" : "/app"}>Get started{isAuthenticated ? "" : " for free"}</Link>
               </Button>
             </div>
-            <div className="bg-white p-6 rounded-xl border shadow-sm">
-              <div className="aspect-video rounded-lg bg-slate-100 flex items-center justify-center text-muted-foreground">
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border shadow-sm">
+              <div className="aspect-video rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-muted-foreground">
                 [Demo screenshot placeholder]
               </div>
             </div>
@@ -153,7 +167,9 @@ const Landing = () => {
               Start using ScrubAI today and ensure your content remains fingerprint-free.
             </p>
             <Button size="lg" variant="outline" className="mt-8 bg-white text-scrub-blue hover:bg-blue-50" asChild>
-              <Link to="/app">Try ScrubAI for free</Link>
+              <Link to={isAuthenticated ? "/app" : "/app"}>
+                {isAuthenticated ? "Open Dashboard" : "Try ScrubAI for free"}
+              </Link>
             </Button>
           </div>
         </div>

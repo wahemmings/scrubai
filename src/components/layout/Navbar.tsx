@@ -5,11 +5,17 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
 import { Moon, Sun, Menu, X } from "lucide-react";
 
+// We'll add this mock auth state until Supabase is integrated
+const mockAuthState = {
+  isAuthenticated: false, // Change to true to test authenticated state
+};
+
 const Navbar = () => {
   const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const isHomePage = location.pathname === "/";
+  const { isAuthenticated } = mockAuthState;
 
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light");
@@ -40,15 +46,27 @@ const Navbar = () => {
           <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
             {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
           </Button>
+          
           {isHomePage ? (
-            <>
-              <Button variant="ghost" asChild>
-                <Link to="/app">Sign in</Link>
-              </Button>
-              <Button asChild>
-                <Link to="/app">Get Started</Link>
-              </Button>
-            </>
+            isAuthenticated ? (
+              <>
+                <Button variant="outline" asChild>
+                  <Link to="/app">Open Dashboard</Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/app">Get Started</Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link to="/app">Sign in</Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/app">Get Started</Link>
+                </Button>
+              </>
+            )
           ) : (
             <Button variant="outline" size="sm" asChild>
               <Link to="/">Back to home</Link>
@@ -86,14 +104,25 @@ const Navbar = () => {
             </Link>
             <div className="pt-4 border-t">
               {isHomePage ? (
-                <div className="flex flex-col gap-3">
-                  <Button variant="outline" asChild>
-                    <Link to="/app" onClick={() => setIsOpen(false)}>Sign in</Link>
-                  </Button>
-                  <Button asChild>
-                    <Link to="/app" onClick={() => setIsOpen(false)}>Get Started</Link>
-                  </Button>
-                </div>
+                isAuthenticated ? (
+                  <div className="flex flex-col gap-3">
+                    <Button variant="outline" asChild>
+                      <Link to="/app" onClick={() => setIsOpen(false)}>Open Dashboard</Link>
+                    </Button>
+                    <Button asChild>
+                      <Link to="/app" onClick={() => setIsOpen(false)}>Get Started</Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <Button variant="outline" asChild>
+                      <Link to="/app" onClick={() => setIsOpen(false)}>Sign in</Link>
+                    </Button>
+                    <Button asChild>
+                      <Link to="/app" onClick={() => setIsOpen(false)}>Get Started</Link>
+                    </Button>
+                  </div>
+                )
               ) : (
                 <Button variant="outline" size="sm" asChild>
                   <Link to="/" onClick={() => setIsOpen(false)}>Back to home</Link>
