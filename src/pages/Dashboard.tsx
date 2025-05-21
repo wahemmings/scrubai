@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
-import { Device, GoogleDrive, Dropbox } from "lucide-react";
+import { Laptop, FileCloud, Box } from "lucide-react";
 import FileUploader from "@/components/dashboard/FileUploader";
 import ProcessingOptions from "@/components/dashboard/ProcessingOptions";
 
@@ -105,16 +104,16 @@ const Dashboard = () => {
                 <h2 className="text-lg font-semibold mb-4">Upload Source</h2>
                 <div className="grid grid-cols-3 gap-3">
                   <Button variant="outline" className="flex flex-col items-center justify-center gap-2 py-3 h-auto">
-                    <Device className="h-5 w-5" />
-                    <span className="text-xs">Device</span>
+                    <Laptop className="h-5 w-5" />
+                    <span className="text-xs">Laptop</span>
                   </Button>
                   <Button variant="outline" className="flex flex-col items-center justify-center gap-2 py-3 h-auto">
-                    <GoogleDrive className="h-5 w-5" />
-                    <span className="text-xs">Google Drive</span>
+                    <FileCloud className="h-5 w-5" />
+                    <span className="text-xs">File Cloud</span>
                   </Button>
                   <Button variant="outline" className="flex flex-col items-center justify-center gap-2 py-3 h-auto">
-                    <Dropbox className="h-5 w-5" />
-                    <span className="text-xs">Dropbox</span>
+                    <Box className="h-5 w-5" />
+                    <span className="text-xs">Box</span>
                   </Button>
                 </div>
               </CardContent>
