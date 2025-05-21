@@ -1,6 +1,7 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Laptop, FileCloud, Box, Check } from "lucide-react";
+import { Laptop, FileCode, Box, Check } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 const HeroUploadDemo = () => {
@@ -77,7 +78,7 @@ const HeroUploadDemo = () => {
                 <span className="text-xs">Device</span>
               </Button>
               <Button variant="outline" className="flex flex-col items-center justify-center gap-2 py-3 h-auto" onClick={() => handleUpload("google-drive")}>
-                <FileCloud className="h-5 w-5" />
+                <FileCode className="h-5 w-5" />
                 <span className="text-xs">Google Drive</span>
               </Button>
               <Button variant="outline" className="flex flex-col items-center justify-center gap-2 py-3 h-auto" onClick={() => handleUpload("dropbox")}>

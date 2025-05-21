@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
-import { Laptop, FileCloud, Box } from "lucide-react";
+import { Laptop, FileCode, Box } from "lucide-react";
 import FileUploader from "@/components/dashboard/FileUploader";
 import ProcessingOptions from "@/components/dashboard/ProcessingOptions";
 
@@ -108,7 +108,7 @@ const Dashboard = () => {
                     <span className="text-xs">Laptop</span>
                   </Button>
                   <Button variant="outline" className="flex flex-col items-center justify-center gap-2 py-3 h-auto">
-                    <FileCloud className="h-5 w-5" />
+                    <FileCode className="h-5 w-5" />
                     <span className="text-xs">File Cloud</span>
                   </Button>
                   <Button variant="outline" className="flex flex-col items-center justify-center gap-2 py-3 h-auto">
