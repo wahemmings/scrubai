@@ -57,34 +57,37 @@ const Navbar = () => {
             {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
           </Button>
           
-          {isHomePage ? (
-            user ? (
-              <>
+          {user ? (
+            <div className="flex items-center gap-4">
+              {isHomePage && (
                 <Button variant="outline" asChild>
                   <Link to="/app">Open Dashboard</Link>
                 </Button>
-                {/* Profile dropdown menu */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full" aria-label="User profile">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link to="/profile">Profile settings</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => signOut()}>
-                      Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            ) : (
+              )}
+              
+              {/* Profile dropdown menu - Always visible when user is logged in */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full" aria-label="User profile">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile">Profile settings</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => signOut()}>
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ) : (
+            isHomePage ? (
               <>
                 <Button variant="ghost" asChild>
                   <Link to="/auth">Sign In</Link>
@@ -93,34 +96,11 @@ const Navbar = () => {
                   <Link to="/auth?tab=signup">Sign Up</Link>
                 </Button>
               </>
-            )
-          ) : (
-            <>
+            ) : (
               <Button variant="outline" size="sm" asChild>
                 <Link to="/">Back to home</Link>
               </Button>
-              {user && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full" aria-label="User profile">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link to="/profile">Profile settings</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => signOut()}>
-                      Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </>
+            )
           )}
         </div>
         
@@ -128,6 +108,18 @@ const Navbar = () => {
           <Button variant="ghost" size="icon" onClick={toggleTheme} className="mr-2">
             {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
           </Button>
+          
+          {/* Show user avatar in mobile view when logged in */}
+          {user && (
+            <Button variant="ghost" size="icon" className="rounded-full mr-2" asChild>
+              <Link to="/profile">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                </Avatar>
+              </Link>
+            </Button>
+          )}
+          
           <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
@@ -162,20 +154,22 @@ const Navbar = () => {
               </Link>
             )}
             <div className="pt-4 border-t">
-              {isHomePage ? (
-                user ? (
-                  <div className="flex flex-col gap-3">
+              {user ? (
+                <div className="flex flex-col gap-3">
+                  {isHomePage && (
                     <Button variant="outline" asChild>
                       <Link to="/app" onClick={() => setIsOpen(false)}>Open Dashboard</Link>
                     </Button>
-                    <Button variant="ghost" onClick={() => {
-                      signOut();
-                      setIsOpen(false);
-                    }}>
-                      Sign Out
-                    </Button>
-                  </div>
-                ) : (
+                  )}
+                  <Button variant="ghost" onClick={() => {
+                    signOut();
+                    setIsOpen(false);
+                  }}>
+                    Sign Out
+                  </Button>
+                </div>
+              ) : (
+                isHomePage ? (
                   <div className="flex flex-col gap-3">
                     <Button variant="outline" asChild>
                       <Link to="/auth" onClick={() => setIsOpen(false)}>Sign In</Link>
@@ -184,11 +178,11 @@ const Navbar = () => {
                       <Link to="/auth?tab=signup" onClick={() => setIsOpen(false)}>Sign Up</Link>
                     </Button>
                   </div>
+                ) : (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/" onClick={() => setIsOpen(false)}>Back to home</Link>
+                  </Button>
                 )
-              ) : (
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/" onClick={() => setIsOpen(false)}>Back to home</Link>
-                </Button>
               )}
             </div>
           </nav>
