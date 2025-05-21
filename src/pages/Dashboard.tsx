@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,9 @@ import { CreditDisplay } from "@/components/dashboard/CreditDisplay";
 import { ProcessContent } from "@/components/dashboard/ProcessContent";
 import { useAppStore } from "@/stores/useAppStore";
 import { Progress } from "@/components/ui/progress";
+import { useSubscription } from "@/hooks/useSubscription";
+import { toast } from "@/components/ui/use-toast";
+import { openCustomerPortal } from "@/services/subscriptionService";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -22,12 +26,28 @@ const Dashboard = () => {
   const [uploadedContent, setUploadedContent] = useState<string | File | null>(null);
   const [processingOptions, setProcessingOptions] = useState<Record<string, any>>({});
   const { currentJob } = useAppStore();
+  const { subscription, isLoading: isLoadingSubscription, refreshSubscription } = useSubscription();
+  const [searchParams] = useSearchParams();
   
   useEffect(() => {
     if (!isLoading && !user) {
       navigate("/auth");
     }
   }, [user, isLoading, navigate]);
+  
+  useEffect(() => {
+    // Check for successful subscription
+    const subscriptionSuccess = searchParams.get('subscription_success');
+    
+    if (subscriptionSuccess === 'true') {
+      toast({
+        title: "Subscription Successful",
+        description: "Thank you for subscribing to ScrubAI!",
+        variant: "success",
+      });
+      refreshSubscription();
+    }
+  }, [searchParams, refreshSubscription]);
   
   const handleOptionsChange = (options: Record<string, any>) => {
     setProcessingOptions(options);
@@ -41,6 +61,57 @@ const Dashboard = () => {
   const handleFileUploaded = (content: string | File) => {
     setFileUploaded(true);
     setUploadedContent(content);
+  };
+  
+  const handleManageSubscription = async () => {
+    const url = await openCustomerPortal();
+    if (url) {
+      window.location.href = url;
+    }
+  };
+  
+  const getSubscriptionBadge = () => {
+    if (isLoadingSubscription) {
+      return (
+        <Badge variant="outline" className="bg-background text-foreground">
+          Loading subscription...
+        </Badge>
+      );
+    }
+    
+    if (!subscription.subscribed) {
+      return (
+        <Badge variant="outline" className="bg-background text-foreground">
+          Free Trial - 6 days left
+        </Badge>
+      );
+    }
+    
+    const planLabel = subscription.plan_type?.charAt(0).toUpperCase() + subscription.plan_type?.slice(1);
+    let variant: "default" | "outline" | "secondary" | "destructive" | "success" = "outline";
+    
+    switch (subscription.plan_type) {
+      case 'basic':
+        variant = "secondary";
+        break;
+      case 'pro':
+        variant = "default";
+        break;
+      case 'enterprise':
+        variant = "success";
+        break;
+    }
+    
+    return (
+      <Badge variant={variant} className="cursor-pointer" onClick={handleManageSubscription}>
+        {planLabel} Plan
+        {subscription.current_period_end && (
+          <span className="ml-1 text-xs">
+            - Renews {new Date(subscription.current_period_end).toLocaleDateString()}
+          </span>
+        )}
+      </Badge>
+    );
   };
   
   if (isLoading) {
@@ -58,11 +129,11 @@ const Dashboard = () => {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold">ScrubAI Dashboard</h1>
         <div className="flex items-center gap-3">
-          <Badge variant="outline" className="bg-background text-foreground">
-            Free Trial - 6 days left
-          </Badge>
+          {getSubscriptionBadge()}
           <CreditDisplay />
-          <Button size="sm" onClick={() => navigate("/pricing")}>Upgrade</Button>
+          <Button size="sm" onClick={() => navigate("/pricing")}>
+            {subscription.subscribed ? "Manage Plan" : "Upgrade"}
+          </Button>
         </div>
       </div>
       
