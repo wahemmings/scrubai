@@ -19,7 +19,8 @@ export const config = {
     baseUrl: import.meta.env.PROD ? 'https://api.scrubai.com' : 'http://localhost:3001',
     routes: {
       process: '/api/process',
-      progress: '/api/progress'
+      progress: '/api/progress',
+      auth: '/api/auth'
     }
   },
   
@@ -30,6 +31,29 @@ export const config = {
       text: ['.txt', '.md'],
       document: ['.docx', '.pdf'],
       image: ['.png', '.jpg', '.jpeg', '.webp']
+    }
+  },
+  
+  // Pricing and subscription
+  pricing: {
+    free: {
+      credits: 5,
+      description: 'Free trial with limited credits'
+    },
+    basic: {
+      monthly: 9.99,
+      credits: 50,
+      description: 'Basic plan for occasional use'
+    },
+    pro: {
+      monthly: 29.99,
+      credits: 200,
+      description: 'Professional plan for regular use'
+    },
+    enterprise: {
+      monthly: 99.99,
+      credits: 1000,
+      description: 'Enterprise plan for intensive use'
     }
   }
 };
