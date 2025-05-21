@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +12,7 @@ import ProcessingOptions from "@/components/dashboard/ProcessingOptions";
 import { CreditDisplay } from "@/components/dashboard/CreditDisplay";
 import { ProcessContent } from "@/components/dashboard/ProcessContent";
 import { useAppStore } from "@/stores/useAppStore";
+import { Progress } from "@/components/ui/progress";
 
 const Dashboard = () => {
   const navigate = useNavigate();
