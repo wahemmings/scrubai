@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -43,7 +42,7 @@ const Dashboard = () => {
       toast({
         title: "Subscription Successful",
         description: "Thank you for subscribing to ScrubAI!",
-        variant: "success",
+        variant: "default",
       });
       refreshSubscription();
     }
