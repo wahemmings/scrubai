@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/components/ui/use-toast";
 import { processContent, CREDIT_COSTS } from "./ProcessingService";
 import { Progress } from "@/components/ui/progress";
 import { useAppStore } from "@/stores/useAppStore";

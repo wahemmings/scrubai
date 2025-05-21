@@ -43,7 +43,8 @@ export const SubscriptionBadge = ({ subscription, isLoading }: SubscriptionBadge
       variant = "default";
       break;
     case 'enterprise':
-      variant = "success";
+      // Using default instead of "success" which isn't a valid variant
+      variant = "default"; 
       break;
   }
   

@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAppStore } from "@/stores/useAppStore";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/components/ui/use-toast";
 import config from "@/config";
 
 // Define credit costs for different operations

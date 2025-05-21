@@ -1,11 +1,10 @@
-
 import { useState, useRef } from "react";
 import { useAppStore } from "@/stores/useAppStore";
 import config from "@/config";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { v4 as uuidv4 } from "uuid";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/use-toast";
 
 interface FileUploaderProps {
   type: "text" | "document" | "image";
