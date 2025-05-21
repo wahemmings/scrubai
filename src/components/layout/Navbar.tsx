@@ -3,8 +3,17 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
-import { Moon, Sun, Menu, X } from "lucide-react";
+import { Moon, Sun, Menu, X, UserRound } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const Navbar = () => {
   const { theme, setTheme } = useTheme();
@@ -15,6 +24,11 @@ const Navbar = () => {
 
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light");
+  };
+
+  const getUserInitials = () => {
+    if (!user || !user.email) return "U";
+    return user.email.charAt(0).toUpperCase();
   };
 
   return (
@@ -49,9 +63,26 @@ const Navbar = () => {
                 <Button variant="outline" asChild>
                   <Link to="/app">Open Dashboard</Link>
                 </Button>
-                <Button variant="ghost" onClick={() => signOut()}>
-                  Sign Out
-                </Button>
+                {/* Profile dropdown menu */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full" aria-label="User profile">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile">Profile settings</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => signOut()}>
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             ) : (
               <>
@@ -64,9 +95,32 @@ const Navbar = () => {
               </>
             )
           ) : (
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/">Back to home</Link>
-            </Button>
+            <>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/">Back to home</Link>
+              </Button>
+              {user && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full" aria-label="User profile">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile">Profile settings</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => signOut()}>
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </>
           )}
         </div>
         
@@ -98,6 +152,15 @@ const Navbar = () => {
             >
               Pricing
             </Link>
+            {user && (
+              <Link 
+                to="/profile" 
+                className="text-sm font-medium transition-colors text-muted-foreground hover:text-foreground"
+                onClick={() => setIsOpen(false)}
+              >
+                Profile settings
+              </Link>
+            )}
             <div className="pt-4 border-t">
               {isHomePage ? (
                 user ? (
