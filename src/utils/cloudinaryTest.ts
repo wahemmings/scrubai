@@ -7,7 +7,7 @@ import { toast } from "sonner";
 // Function to test Cloudinary connection
 export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
   if (!isCloudinaryEnabled()) {
-    toast.error("Cloudinary is not enabled", { 
+    toast("Cloudinary is not enabled", { 
       description: "Please configure your Cloudinary cloud name in environment variables."
     });
     console.log("Cloudinary not enabled - check your VITE_CLOUDINARY_CLOUD_NAME setting");
@@ -18,7 +18,7 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
     console.log("Testing Cloudinary connection with user:", user?.id);
     
     if (!user) {
-      toast.error("Authentication required", {
+      toast("Authentication required", {
         description: "You must be logged in to test Cloudinary connection."
       });
       return false;
@@ -29,7 +29,7 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
     console.log("Auth session available:", !!session);
     
     if (!session) {
-      toast.error("No active session found", {
+      toast("No active session found", {
         description: "Please log out and log in again to refresh your session."
       });
       return false;
@@ -40,13 +40,13 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
     const signatureData = await getUploadSignature(user);
     
     if (!signatureData || !signatureData.signature) {
-      toast.error("Invalid Cloudinary signature data");
+      toast("Invalid Cloudinary signature data");
       console.error("Invalid signature data received:", signatureData);
       return false;
     }
     
     console.log("Cloudinary signature successfully obtained:", signatureData);
-    toast.success("Cloudinary connection successful", {
+    toast("Cloudinary connection successful", {
       description: "Your Cloudinary integration is working correctly."
     });
     return true;
@@ -58,20 +58,20 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
       const errorMsg = error.message;
       
       if (errorMsg.includes("Failed to send a request to the Edge Function")) {
-        toast.error("Edge Function connection failed", {
+        toast("Edge Function connection failed", {
           description: "Make sure your Supabase Edge Function is deployed correctly and your session is valid."
         });
       } else if (errorMsg.includes("Unauthorized") || errorMsg.includes("JWT")) {
-        toast.error("Authentication error", {
+        toast("Authentication error", {
           description: "Your session may have expired. Please log out and log in again."
         });
       } else {
-        toast.error("Cloudinary connection failed", {
+        toast("Cloudinary connection failed", {
           description: errorMsg
         });
       }
     } else {
-      toast.error("Cloudinary connection failed", {
+      toast("Cloudinary connection failed", {
         description: "Unknown error"
       });
     }
@@ -82,7 +82,7 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
 // Function to upload a test file to Cloudinary
 export const uploadTestFile = async (user: any): Promise<void> => {
   if (!isCloudinaryEnabled()) {
-    toast.error("Cloudinary is not enabled", {
+    toast("Cloudinary is not enabled", {
       description: "Please configure your Cloudinary cloud name in environment variables."
     });
     return;
@@ -94,21 +94,21 @@ export const uploadTestFile = async (user: any): Promise<void> => {
     const testFile = new File([testBlob], 'cloudinary-test.txt', { type: 'text/plain' });
     
     // Get upload signature
-    toast.info("Requesting upload signature...");
+    toast("Requesting upload signature...");
     const signatureData = await getUploadSignature(user);
     
     // Start upload
-    toast.info("Uploading test file to Cloudinary...");
+    toast("Uploading test file to Cloudinary...");
     
     // Upload to Cloudinary
     const result = await secureUploadToCloudinary(testFile, signatureData);
     
     if (result && result.public_id) {
-      toast.success("Test file uploaded successfully", {
+      toast("Test file uploaded successfully", {
         description: `Public ID: ${result.public_id}`
       });
     } else {
-      toast.error("Test upload failed", {
+      toast("Test upload failed", {
         description: "Received invalid response from Cloudinary"
       });
     }
@@ -120,20 +120,20 @@ export const uploadTestFile = async (user: any): Promise<void> => {
       const errorMsg = error.message;
       
       if (errorMsg.includes("Failed to send a request to the Edge Function")) {
-        toast.error("Edge Function connection failed", {
+        toast("Edge Function connection failed", {
           description: "Make sure your Supabase Edge Function is deployed correctly and secrets are configured."
         });
       } else if (errorMsg.includes("Unauthorized") || errorMsg.includes("JWT")) {
-        toast.error("Authentication error", {
+        toast("Authentication error", {
           description: "Your session may have expired. Please log out and log in again."
         });
       } else {
-        toast.error("Test upload failed", {
+        toast("Test upload failed", {
           description: errorMsg
         });
       }
     } else {
-      toast.error("Test upload failed", {
+      toast("Test upload failed", {
         description: "Unknown error"
       });
     }

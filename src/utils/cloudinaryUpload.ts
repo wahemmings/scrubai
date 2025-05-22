@@ -90,8 +90,7 @@ export const secureUploadToCloudinary = async (file: File, signatureData: any) =
 
 // Upload file to server with secure Cloudinary process
 export const uploadToServer = async (file: File, jobId: string, user: any) => {
-  toast({
-    title: "Processing file",
+  toast("Processing file", {
     description: "Your file is being processed on our secure servers."
   });
   
@@ -126,8 +125,7 @@ export const uploadToServer = async (file: File, jobId: string, user: any) => {
     };
   } catch (error) {
     console.error("Upload error:", error);
-    toast({
-      title: "Upload failed",
+    toast("Upload failed", {
       description: error instanceof Error ? error.message : "Unknown error",
       variant: "destructive"
     });
