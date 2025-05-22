@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
-import { FileText, Plus, Search, Filter, Trash2, Check } from "lucide-react";
+import { FileText, Plus, Search, Filter, Trash2, Check, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +20,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import FileUploader from "@/components/dashboard/FileUploader";
 
 interface Document {
   id: number;
@@ -38,6 +39,7 @@ const Documents = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDocuments, setSelectedDocuments] = useState<number[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -107,6 +109,23 @@ const Documents = () => {
     toast.success("Document deleted successfully");
   };
 
+  const handleFileUploaded = (jobId: string, fileData: any) => {
+    // Add the new document to the documents list
+    const newDocument: Document = {
+      id: documents.length + 1, // In a real app, this would come from the database
+      name: fileData.fileName || `Document-${Date.now()}.pdf`,
+      type: fileData.fileName?.split('.').pop()?.toUpperCase() || "PDF",
+      size: fileData.fileSize ? `${(fileData.fileSize / 1024).toFixed(1)} KB` : "Unknown",
+      lastModified: new Date().toFullYear() + "-" + 
+                    String(new Date().getMonth() + 1).padStart(2, '0') + "-" + 
+                    String(new Date().getDate()).padStart(2, '0'),
+    };
+    
+    setDocuments([newDocument, ...documents]);
+    setUploadDialogOpen(false);
+    toast.success("Document uploaded successfully!");
+  };
+
   return (
     <div className="flex h-screen bg-background">
       <DashboardSidebar />
@@ -153,7 +172,7 @@ const Documents = () => {
                   <Button variant="outline" onClick={toggleSelectionMode}>
                     Select
                   </Button>
-                  <Button>
+                  <Button onClick={() => setUploadDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Upload Document
                   </Button>
@@ -161,6 +180,21 @@ const Documents = () => {
               )}
             </div>
           </div>
+
+          {/* Document upload dialog */}
+          <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Upload Document</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <FileUploader 
+                  type="document" 
+                  onFileUploaded={handleFileUploaded} 
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Tabs defaultValue="all" className="w-full">
             <TabsList className="mb-4">
@@ -250,7 +284,7 @@ const Documents = () => {
                     <FileText className="h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-medium mb-2">No documents yet</h3>
                     <p className="text-muted-foreground mb-6">Upload your first document to get started</p>
-                    <Button>
+                    <Button onClick={() => setUploadDialogOpen(true)}>
                       <Plus className="h-4 w-4 mr-2" />
                       Upload Document
                     </Button>
