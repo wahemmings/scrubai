@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,6 +17,12 @@ const Auth = () => {
   const [resetEmail, setResetEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
+  const [showProfileForm, setShowProfileForm] = useState(false);
+  const [profileData, setProfileData] = useState({
+    firstName: "",
+    lastName: "",
+    company: "",
+  });
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -47,15 +53,20 @@ const Auth = () => {
     try {
       const { error } = await signIn(email, password);
       if (error) {
+        // Explicitly show error message for login failures
+        console.error("Login error:", error.message);
+        let errorMessage = "Invalid email or password";
+        
         toast({
           variant: "destructive",
           title: "Sign in failed",
-          description: error.message,
+          description: errorMessage,
         });
       } else {
         navigate("/app");
       }
     } catch (error) {
+      console.error("Unexpected error during login:", error);
       toast({
         variant: "destructive",
         title: "An error occurred",
@@ -66,23 +77,83 @@ const Auth = () => {
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleInitialSignup = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Basic validation
+    if (!email || !password) {
+      toast({
+        variant: "destructive",
+        title: "Missing information",
+        description: "Please provide both email and password.",
+      });
+      return;
+    }
+    
+    if (password.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Password too short",
+        description: "Password must be at least 6 characters.",
+      });
+      return;
+    }
+    
+    // Set flag to show profile form
+    setShowProfileForm(true);
+  };
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
+    // Validate profile data
+    if (!profileData.firstName || !profileData.lastName) {
+      toast({
+        variant: "destructive",
+        title: "Missing information",
+        description: "Please provide both first and last name.",
+      });
+      setIsLoading(false);
+      return;
+    }
+    
     try {
+      // Call signUp with user metadata
       const { error } = await signUp(email, password);
+      
       if (error) {
+        console.error("Signup error:", error.message);
+        
+        let errorMessage = error.message;
+        if (error.message.includes("already registered")) {
+          errorMessage = "This email is already registered. Please sign in instead.";
+        }
+        
         toast({
           variant: "destructive",
           title: "Sign up failed",
-          description: error.message,
+          description: errorMessage,
         });
       } else {
-        // Create initial credit for new user
+        // Create initial credit for new user and store profile data
         try {
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
+            // Insert user profile data
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .upsert({ 
+                id: user.id, 
+                full_name: `${profileData.firstName} ${profileData.lastName}`,
+                // Add any additional profile fields here
+              });
+            
+            if (profileError) {
+              console.error('Error creating user profile:', profileError);
+            }
+            
+            // Add initial credits
             const { error: creditsError } = await supabase
               .from('credits')
               .insert({ user_id: user.id, amount: 5 });
@@ -96,11 +167,23 @@ const Auth = () => {
         }
 
         toast({
-          title: "Check your email",
-          description: "We sent you a confirmation link.",
+          title: "Account created successfully",
+          description: "We've created your account. You may need to verify your email before signing in.",
+          type: "success"
+        });
+        
+        // Reset form and return to sign-in tab
+        setShowProfileForm(false);
+        setEmail("");
+        setPassword("");
+        setProfileData({
+          firstName: "",
+          lastName: "",
+          company: "",
         });
       }
     } catch (error) {
+      console.error("Unexpected error during signup:", error);
       toast({
         variant: "destructive",
         title: "An error occurred",
@@ -183,6 +266,66 @@ const Auth = () => {
     );
   }
 
+  if (showProfileForm) {
+    return (
+      <div className="container max-w-md py-12">
+        <Card>
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center">Complete Your Profile</CardTitle>
+            <CardDescription className="text-center">
+              Please provide some additional information
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleProfileSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input 
+                  id="firstName" 
+                  placeholder="John" 
+                  value={profileData.firstName} 
+                  onChange={(e) => setProfileData({...profileData, firstName: e.target.value})} 
+                  required 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input 
+                  id="lastName" 
+                  placeholder="Doe" 
+                  value={profileData.lastName} 
+                  onChange={(e) => setProfileData({...profileData, lastName: e.target.value})} 
+                  required 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company">Company/Organization (Optional)</Label>
+                <Input 
+                  id="company" 
+                  placeholder="ACME Corp" 
+                  value={profileData.company} 
+                  onChange={(e) => setProfileData({...profileData, company: e.target.value})} 
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Creating account..." : "Create Account"}
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              variant="ghost" 
+              className="w-full" 
+              onClick={() => setShowProfileForm(false)}
+            >
+              Back
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container max-w-md py-12">
       <Card>
@@ -235,7 +378,7 @@ const Auth = () => {
               </form>
             </TabsContent>
             <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
+              <form onSubmit={handleInitialSignup} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
                   <Input 
@@ -258,7 +401,7 @@ const Auth = () => {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Creating account..." : "Create Account"}
+                  {isLoading ? "Processing..." : "Continue"}
                 </Button>
               </form>
             </TabsContent>
