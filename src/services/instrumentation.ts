@@ -1,6 +1,5 @@
 
 import * as Sentry from '@sentry/react';
-import { BrowserTracing, Replay } from '@sentry/browser';
 import posthog from 'posthog-js';
 import config from '@/config';
 
@@ -9,11 +8,11 @@ export const initSentry = () => {
   Sentry.init({
     dsn: config.externalServices.analytics.sentryDsn,
     integrations: [
-      // Use Sentry's recommended integration pattern
-      new BrowserTracing({
+      // Use Sentry's built-in integrations
+      Sentry.browserTracingIntegration({
         tracePropagationTargets: ['localhost', /^https:\/\/yourserver\.io\/api/],
       }),
-      new Replay(),
+      Sentry.replayIntegration(),
     ],
     // Performance Monitoring
     tracesSampleRate: 0.1, // Capture 10% of transactions for performance monitoring.
