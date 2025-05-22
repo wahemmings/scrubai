@@ -10,27 +10,40 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
     toast.error("Cloudinary is not enabled", { 
       description: "Please configure your Cloudinary cloud name in environment variables."
     });
+    console.log("Cloudinary not enabled - check your VITE_CLOUDINARY_CLOUD_NAME setting");
     return false;
   }
 
   try {
+    console.log("Testing Cloudinary connection with user:", user?.id);
+    
     // Attempt to get upload signature from edge function
     const signatureData = await getUploadSignature(user);
     
     if (!signatureData || !signatureData.signature) {
       toast.error("Invalid Cloudinary signature data");
+      console.error("Invalid signature data received:", signatureData);
       return false;
     }
     
+    console.log("Cloudinary signature successfully obtained");
     toast.success("Cloudinary connection successful", {
       description: "Your Cloudinary integration is working correctly."
     });
     return true;
   } catch (error) {
     console.error("Error testing Cloudinary connection:", error);
-    toast.error("Cloudinary connection failed", {
-      description: error instanceof Error ? error.message : "Unknown error"
-    });
+    
+    // Enhanced error handling with specific messages
+    if (error instanceof Error && error.message.includes("Failed to send a request to the Edge Function")) {
+      toast.error("Edge Function connection failed", {
+        description: "Make sure your Supabase Edge Function is deployed correctly."
+      });
+    } else {
+      toast.error("Cloudinary connection failed", {
+        description: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
     return false;
   }
 };
@@ -50,6 +63,7 @@ export const uploadTestFile = async (user: any): Promise<void> => {
     const testFile = new File([testBlob], 'cloudinary-test.txt', { type: 'text/plain' });
     
     // Get upload signature
+    toast.info("Requesting upload signature...");
     const signatureData = await getUploadSignature(user);
     
     // Start upload
@@ -69,8 +83,16 @@ export const uploadTestFile = async (user: any): Promise<void> => {
     }
   } catch (error) {
     console.error("Error uploading test file:", error);
-    toast.error("Test upload failed", {
-      description: error instanceof Error ? error.message : "Unknown error"
-    });
+    
+    // Enhanced error handling with specific messages
+    if (error instanceof Error && error.message.includes("Failed to send a request to the Edge Function")) {
+      toast.error("Edge Function connection failed", {
+        description: "Make sure your Supabase Edge Function is deployed correctly and secrets are configured."
+      });
+    } else {
+      toast.error("Test upload failed", {
+        description: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
   }
 };

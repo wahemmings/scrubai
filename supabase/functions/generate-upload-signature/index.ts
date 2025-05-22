@@ -28,6 +28,8 @@ function generateSignature(params: Record<string, string | number>, apiSecret: s
 }
 
 Deno.serve(async (req) => {
+  console.log("Edge function called: generate-upload-signature");
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -37,6 +39,7 @@ Deno.serve(async (req) => {
     // Get authorization token and verify user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error("No authorization header provided");
       return new Response(
         JSON.stringify({ error: 'No authorization header provided' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -48,17 +51,28 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
+      console.error("Authentication error:", authError);
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Unauthorized', details: authError?.message }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    console.log("Authenticated user:", user.id);
     
     // Get Cloudinary credentials from environment variables
     const cloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME');
     const apiKey = Deno.env.get('CLOUDINARY_API_KEY');
     const apiSecret = Deno.env.get('CLOUDINARY_API_SECRET');
     const uploadPreset = Deno.env.get('CLOUDINARY_UPLOAD_PRESET') || 'scrubai_secure';
+    
+    // Log available environment variables for debugging
+    console.log("Environment check:", {
+      hasCloudName: !!cloudName,
+      hasApiKey: !!apiKey,
+      hasApiSecret: !!apiSecret,
+      hasUploadPreset: !!uploadPreset
+    });
     
     // Validate required Cloudinary credentials
     if (!cloudName || !apiKey || !apiSecret) {
@@ -69,7 +83,7 @@ Deno.serve(async (req) => {
       });
       
       return new Response(
-        JSON.stringify({ error: 'Cloudinary configuration not found' }),
+        JSON.stringify({ error: 'Cloudinary configuration not found', details: 'Check that all required secrets are configured in the Supabase dashboard' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -90,6 +104,8 @@ Deno.serve(async (req) => {
     
     // Generate signature
     const signature = generateSignature(paramsToSign, apiSecret);
+    
+    console.log("Generated signature successfully");
     
     // Return the signature and parameters needed for the frontend
     return new Response(

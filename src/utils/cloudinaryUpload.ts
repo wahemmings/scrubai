@@ -9,17 +9,32 @@ export const getUploadSignature = async (user: any) => {
   }
   
   try {
+    console.log("Requesting upload signature for user:", user.id);
+    
+    // Check that the user has a valid session token
+    const authHeader = await supabase.auth.getSession();
+    if (!authHeader?.data?.session?.access_token) {
+      throw new Error("No valid session token found");
+    }
+    
     const { data, error } = await supabase.functions.invoke('generate-upload-signature', {
       method: 'POST'
     });
     
-    if (error) throw error;
-    if (!data) throw new Error("No signature data returned from edge function");
+    if (error) {
+      console.error("Edge function error:", error);
+      throw new Error(`Edge function error: ${error.message}`);
+    }
+    
+    if (!data) {
+      console.error("No signature data returned from edge function");
+      throw new Error("No signature data returned from edge function");
+    }
     
     console.log("Upload signature received:", data);
     return data;
   } catch (error) {
-    console.error("Edge function error:", error);
+    console.error("Edge function request error:", error);
     throw new Error(`Failed to get upload signature: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
