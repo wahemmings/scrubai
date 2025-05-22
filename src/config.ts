@@ -3,8 +3,8 @@
 const config = {
   // Supabase configuration 
   supabase: {
-    url: import.meta.env.VITE_SUPABASE_URL || "",
-    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || ""
+    url: import.meta.env.VITE_SUPABASE_URL || "https://rysezrtqehpzonflkezr.supabase.co",
+    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5c2V6cnRxZWhwem9uZmxrZXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NTk0NTIsImV4cCI6MjA2MzQzNTQ1Mn0.iuoDyOtcRhK3CpN1Sf48WGP8Y1YPuSm0SYQ250e1xJE"
   },
   
   // Feature flags
@@ -74,8 +74,8 @@ const config = {
 // Environment variables wrapper for type-safe access
 export const env = {
   // Supabase
-  SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || "",
-  SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || "",
+  SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || "https://rysezrtqehpzonflkezr.supabase.co",
+  SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5c2V6cnRxZWhwem9uZmxrZXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NTk0NTIsImV4cCI6MjA2MzQzNTQ1Mn0.iuoDyOtcRhK3CpN1Sf48WGP8Y1YPuSm0SYQ250e1xJE",
   
   // Cloudinary - client-side safe values only
   CLOUDINARY_CLOUD_NAME: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "",
