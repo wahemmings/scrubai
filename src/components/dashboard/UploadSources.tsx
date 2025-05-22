@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Laptop, Box as BoxIcon, FileType } from "lucide-react";
+import { Laptop, FileType } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
 interface UploadSourcesProps {
