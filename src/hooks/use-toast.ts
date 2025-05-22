@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import type {
@@ -178,19 +179,20 @@ interface ToastOptions {
   duration?: number;
   className?: string;
   onOpenChange?: (open: boolean) => void;
+  type?: "default" | "success" | "error" | "warning";
 }
 
 // Helper functions with fixed typings
 toast.success = (title: string, options: ToastOptions = {}) => {
-  return toast({ title, type: "success", ...options });
+  return toast({ title, ...options, type: "success" });
 };
 
 toast.error = (title: string, options: ToastOptions = {}) => {
-  return toast({ title, type: "error", variant: "destructive", ...options });
+  return toast({ title, ...options, type: "error", variant: "destructive" });
 };
 
 toast.warning = (title: string, options: ToastOptions = {}) => {
-  return toast({ title, type: "warning", ...options });
+  return toast({ title, ...options, type: "warning" });
 };
 
 function useToast() {
