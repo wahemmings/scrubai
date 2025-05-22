@@ -1,6 +1,6 @@
 
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider"
 import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/Dashboard";
@@ -10,6 +10,7 @@ import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
 import Layout from "@/components/layout/Layout";
 import { Toaster } from "@/components/ui/sonner"
+import { AuthProvider } from "@/hooks/useAuth";
 
 // Import ApiKeysPage
 import ApiKeysPage from "./features/api-keys/ApiKeysPage";
@@ -18,18 +19,20 @@ function App() {
   return (
     <BrowserRouter>
       <ThemeProvider defaultTheme="system" storageKey="ui-theme">
-        <Layout>
+        <AuthProvider>
           <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/api-keys" element={<ApiKeysPage />} />
-            <Route path="*" element={<NotFound />} />
+            <Route element={<Layout />}>
+              <Route path="/" element={<Landing />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/api-keys" element={<ApiKeysPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
           </Routes>
-        </Layout>
-        <Toaster />
+          <Toaster />
+        </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
   );
