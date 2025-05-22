@@ -73,6 +73,7 @@ export type Database = {
         Row: {
           created_at: string
           credits_used: number | null
+          false_positive: boolean | null
           file_name: string | null
           file_size: number | null
           id: string
@@ -88,6 +89,7 @@ export type Database = {
         Insert: {
           created_at?: string
           credits_used?: number | null
+          false_positive?: boolean | null
           file_name?: string | null
           file_size?: number | null
           id: string
@@ -103,6 +105,7 @@ export type Database = {
         Update: {
           created_at?: string
           credits_used?: number | null
+          false_positive?: boolean | null
           file_name?: string | null
           file_size?: number | null
           id?: string

@@ -79,6 +79,7 @@ export const markPreviewReady = (jobId: string): void => {
 // Complaints tracking
 export const reportFalsePositive = async (jobId: string): Promise<void> => {
   try {
+    // Update to use the newly added false_positive column
     const { error } = await supabase
       .from('jobs')
       .update({ false_positive: true })
