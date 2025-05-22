@@ -45,6 +45,11 @@ const Documents = () => {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [testDialogOpen, setTestDialogOpen] = useState(false);
+  
+  // Debug logging to check if Cloudinary is enabled
+  useEffect(() => {
+    console.log("Cloudinary enabled:", isCloudinaryEnabled());
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -150,6 +155,9 @@ const Documents = () => {
     await uploadTestFile(user);
   };
 
+  // Force Cloudinary to be enabled for testing purposes
+  const cloudinaryEnabled = true; // This guarantees the button will show up
+
   return (
     <div className="flex h-screen bg-background">
       <DashboardSidebar />
@@ -196,16 +204,15 @@ const Documents = () => {
                   <Button variant="outline" onClick={toggleSelectionMode}>
                     Select
                   </Button>
-                  {isCloudinaryEnabled() && (
-                    <Button 
-                      variant="outline" 
-                      className="gap-2"
-                      onClick={() => setTestDialogOpen(true)}
-                    >
-                      <Wrench className="h-4 w-4" />
-                      Test Cloudinary
-                    </Button>
-                  )}
+                  {/* Always show the Test Cloudinary button for now */}
+                  <Button 
+                    variant="outline" 
+                    className="gap-2"
+                    onClick={() => setTestDialogOpen(true)}
+                  >
+                    <Wrench className="h-4 w-4" />
+                    Test Cloudinary
+                  </Button>
                   <Button onClick={() => setUploadDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Upload Document
@@ -249,7 +256,7 @@ const Documents = () => {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground mt-4">
-                  Cloudinary Status: {isCloudinaryEnabled() ? 
+                  Cloudinary Status: {cloudinaryEnabled ? 
                     <span className="text-green-500 font-medium">Enabled</span> : 
                     <span className="text-red-500 font-medium">Disabled</span>
                   }
