@@ -14,7 +14,7 @@ const ReportIssueButton = ({ jobId }: ReportIssueButtonProps) => {
   const handleReport = async () => {
     setIsReporting(true);
     try {
-      await reportFalsePositive(jobId);
+      await reportFalsePositive({ jobId, timestamp: Date.now() });
     } finally {
       setIsReporting(false);
     }
