@@ -9,7 +9,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
 import { JobsTable } from "@/components/dashboard/JobsTable";
-import { FileUploader } from "@/components/dashboard/FileUploader";
+import FileUploader from "@/components/dashboard/FileUploader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, FilterIcon } from "lucide-react";
