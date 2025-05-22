@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
-import { Moon, Sun, Menu, X, UserRound } from "lucide-react";
+import { Moon, Sun, Menu, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   DropdownMenu, 
@@ -31,11 +31,14 @@ const Navbar = () => {
     return user.email.charAt(0).toUpperCase();
   };
 
+  // Update the home link to point to dashboard if user is logged in
+  const homeLink = user ? "/app" : "/";
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6">
-          <Link to="/" className="flex items-center gap-2">
+          <Link to={homeLink} className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-md bg-scrub-blue text-white flex items-center justify-center font-bold">
               S
             </div>
@@ -43,12 +46,17 @@ const Navbar = () => {
           </Link>
           
           <nav className="hidden md:flex gap-6 ml-6">
-            <Link to="/" className={`text-sm font-medium transition-colors ${location.pathname === "/" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+            <Link to={homeLink} className={`text-sm font-medium transition-colors ${location.pathname === homeLink ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
               Home
             </Link>
             <Link to="/pricing" className={`text-sm font-medium transition-colors ${location.pathname === "/pricing" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
               Pricing
             </Link>
+            {user && (
+              <Link to="/support" className={`text-sm font-medium transition-colors ${location.pathname === "/support" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                Support
+              </Link>
+            )}
           </nav>
         </div>
         
@@ -79,6 +87,9 @@ const Navbar = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/profile">Profile settings</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/support">Support</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => signOut()}>
                     Sign Out
@@ -131,8 +142,8 @@ const Navbar = () => {
         <div className="md:hidden border-t py-4 px-6 bg-background">
           <nav className="flex flex-col space-y-4">
             <Link 
-              to="/" 
-              className={`text-sm font-medium transition-colors ${location.pathname === "/" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              to={homeLink}
+              className={`text-sm font-medium transition-colors ${location.pathname === homeLink ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
               onClick={() => setIsOpen(false)}
             >
               Home
@@ -144,6 +155,15 @@ const Navbar = () => {
             >
               Pricing
             </Link>
+            {user && (
+              <Link 
+                to="/support" 
+                className={`text-sm font-medium transition-colors ${location.pathname === "/support" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setIsOpen(false)}
+              >
+                Support
+              </Link>
+            )}
             {user && (
               <Link 
                 to="/profile" 

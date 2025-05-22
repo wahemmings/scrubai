@@ -16,6 +16,8 @@ import Layout from "@/components/layout/Layout";
 import { Toaster } from "@/components/ui/sonner"
 import { AuthProvider } from "@/hooks/useAuth";
 import { initAnalytics } from "@/services/analytics";
+import Support from "@/pages/Support";
+import FeedbackWidget from "@/components/feedback/FeedbackWidget";
 
 // Import ApiKeysPage (kept but not used in sidebar)
 import ApiKeysPage from "./features/api-keys/ApiKeysPage";
@@ -43,9 +45,11 @@ function App() {
               <Route path="/api-keys" element={<ApiKeysPage />} />
               <Route path="/terms" element={<TermsOfUse />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/support" element={<Support />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
+          <FeedbackWidget />
           <Toaster />
         </AuthProvider>
       </ThemeProvider>

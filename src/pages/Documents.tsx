@@ -1,18 +1,43 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
-import { FileText, Plus, Search, Filter } from "lucide-react";
+import { FileText, Plus, Search, Filter, Trash2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+
+interface Document {
+  id: number;
+  name: string;
+  type: string;
+  size: string;
+  lastModified: string;
+  selected?: boolean;
+}
 
 const Documents = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
-  const [documents, setDocuments] = useState([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedDocuments, setSelectedDocuments] = useState<number[]>([]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -45,6 +70,43 @@ const Documents = () => {
     fetchDocuments();
   }, []);
 
+  const toggleSelection = (id: number) => {
+    if (selectedDocuments.includes(id)) {
+      setSelectedDocuments(selectedDocuments.filter(docId => docId !== id));
+    } else {
+      setSelectedDocuments([...selectedDocuments, id]);
+    }
+  };
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    if (isSelectionMode) {
+      setSelectedDocuments([]);
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedDocuments.length === documents.length) {
+      setSelectedDocuments([]);
+    } else {
+      setSelectedDocuments(documents.map(doc => doc.id));
+    }
+  };
+
+  const deleteSelected = () => {
+    const updatedDocuments = documents.filter(doc => !selectedDocuments.includes(doc.id));
+    setDocuments(updatedDocuments);
+    toast.success(`${selectedDocuments.length} document(s) deleted successfully`);
+    setSelectedDocuments([]);
+    setIsSelectionMode(false);
+  };
+
+  const deleteDocument = (id: number) => {
+    const updatedDocuments = documents.filter(doc => doc.id !== id);
+    setDocuments(updatedDocuments);
+    toast.success("Document deleted successfully");
+  };
+
   return (
     <div className="flex h-screen bg-background">
       <DashboardSidebar />
@@ -52,10 +114,52 @@ const Documents = () => {
         <div className="container py-6">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold">Documents</h1>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Upload Document
-            </Button>
+            <div className="flex gap-2">
+              {isSelectionMode ? (
+                <>
+                  <Button variant="outline" onClick={handleSelectAll}>
+                    {selectedDocuments.length === documents.length ? "Deselect All" : "Select All"}
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="destructive" 
+                        disabled={selectedDocuments.length === 0}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete ({selectedDocuments.length})
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete {selectedDocuments.length} selected document(s).
+                          This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={deleteSelected}>Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <Button variant="outline" onClick={toggleSelectionMode}>
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" onClick={toggleSelectionMode}>
+                    Select
+                  </Button>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Upload Document
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
 
           <Tabs defaultValue="all" className="w-full">
@@ -87,8 +191,20 @@ const Documents = () => {
               ) : documents.length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-3">
                   {documents.map(doc => (
-                    <Card key={doc.id} className="cursor-pointer hover:bg-accent/50 transition-colors">
+                    <Card 
+                      key={doc.id} 
+                      className={`cursor-pointer ${isSelectionMode ? 'relative' : ''} hover:bg-accent/50 transition-colors`}
+                    >
                       <CardContent className="pt-6">
+                        {isSelectionMode && (
+                          <div className="absolute top-2 left-2">
+                            <Checkbox 
+                              checked={selectedDocuments.includes(doc.id)}
+                              onCheckedChange={() => toggleSelection(doc.id)}
+                              aria-label={`Select ${doc.name}`}
+                            />
+                          </div>
+                        )}
                         <div className="flex items-center justify-center h-20 w-20 bg-primary/10 rounded mx-auto mb-4">
                           <FileText className="h-10 w-10 text-primary" />
                         </div>
@@ -100,6 +216,30 @@ const Documents = () => {
                         <p className="text-xs text-center text-muted-foreground mt-2">
                           Last modified: {doc.lastModified}
                         </p>
+                        
+                        {!isSelectionMode && (
+                          <div className="mt-4 flex justify-end">
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete document?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete "{doc.name}"? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => deleteDocument(doc.id)}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   ))}
