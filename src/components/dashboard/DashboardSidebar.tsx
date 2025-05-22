@@ -8,7 +8,6 @@ import {
   PieChart, 
   Settings,
   CreditCard,
-  Key,
   HelpCircle
 } from "lucide-react";
 
@@ -47,12 +46,6 @@ export function DashboardSidebar() {
       path: "/pricing", 
       icon: CreditCard,
       active: isActive("/pricing")
-    },
-    { 
-      name: "API Keys", 
-      path: "/api-keys", 
-      icon: Key,
-      active: isActive("/api-keys")
     },
     { 
       name: "Settings", 

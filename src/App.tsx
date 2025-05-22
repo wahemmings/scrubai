@@ -4,6 +4,8 @@ import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider"
 import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/Dashboard";
+import Documents from "@/pages/Documents";
+import Analytics from "@/pages/Analytics";
 import Auth from "@/pages/Auth";
 import Pricing from "@/pages/Pricing";
 import Profile from "@/pages/Profile";
@@ -15,7 +17,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { AuthProvider } from "@/hooks/useAuth";
 import { initAnalytics } from "@/services/analytics";
 
-// Import ApiKeysPage
+// Import ApiKeysPage (kept but not used in sidebar)
 import ApiKeysPage from "./features/api-keys/ApiKeysPage";
 
 function App() {
@@ -33,6 +35,8 @@ function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/app" element={<Dashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/app/documents" element={<Documents />} />
+              <Route path="/app/analytics" element={<Analytics />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/profile" element={<Profile />} />
