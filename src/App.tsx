@@ -1,85 +1,37 @@
-
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "@/components/theme-provider";
-import { AuthProvider } from "@/hooks/useAuth";
-import Layout from "./components/layout/Layout";
-import Landing from "./pages/Landing";
-import Dashboard from "./pages/Dashboard";
-import Pricing from "./pages/Pricing";
-import NotFound from "./pages/NotFound";
-import Auth from "./pages/Auth";
-import Profile from "./pages/Profile";
-import ApiKeys from "./pages/ApiKeys";
-import { CSP_HEADER } from "./security/csp";
-import { useEffect } from "react";
-import { initMemoryManager } from "./security/memoryManager";
+import { ThemeProvider } from "@/components/theme-provider"
+import Landing from "@/pages/Landing";
+import Dashboard from "@/pages/Dashboard";
+import Auth from "@/pages/Auth";
+import Pricing from "@/pages/Pricing";
+import Profile from "@/pages/Profile";
+import NotFound from "@/pages/NotFound";
+import Layout from "@/components/Layout";
+import { Toaster } from "@/components/ui/sonner"
 
-// Configure CSP meta tag
-const cspMetaTag = document.createElement('meta');
-cspMetaTag.httpEquiv = 'Content-Security-Policy';
-cspMetaTag.content = CSP_HEADER;
-document.head.appendChild(cspMetaTag);
+// Update the import for ApiKeys
+import ApiKeysPage from "./features/api-keys/ApiKeysPage";
 
-// Configure QueryClient with security settings
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: (failureCount, error: any) => {
-        // Limit retries for security (prevent brute force)
-        if (error?.status === 401 || error?.status === 403) {
-          return false; // Don't retry auth failures
-        }
-        return failureCount < 2; // Limit to 2 retries for other errors
-      }
-    }
-  }
-});
-
-const App = () => {
-  // Initialize memory manager for uploads
-  useEffect(() => {
-    initMemoryManager();
-    return () => {
-      // Force garbage collection on unmount if possible
-      if (window.gc) {
-        try {
-          window.gc();
-        } catch (e) {
-          console.warn('Failed to force garbage collection');
-        }
-      }
-    };
-  }, []);
-
+function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light" storageKey="scrubai-theme">
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <BrowserRouter>
-              <Routes>
-                <Route element={<Layout />}>
-                  <Route path="/" element={<Landing />} />
-                  <Route path="/app" element={<Dashboard />} />
-                  <Route path="/pricing" element={<Pricing />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/api-keys" element={<ApiKeys />} />
-                  <Route path="*" element={<NotFound />} />
-                </Route>
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </AuthProvider>
+    <BrowserRouter>
+      <ThemeProvider>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/api-keys" element={<ApiKeysPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Layout>
+        <Toaster />
       </ThemeProvider>
-    </QueryClientProvider>
+    </BrowserRouter>
   );
-};
+}
 
 export default App;
