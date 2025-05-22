@@ -42,11 +42,15 @@ export const PrivacyControls = () => {
         .delete()
         .eq('user_id', user.id);
       
-      // 4. Delete profile data must happen through auth.users deletion with cascade
-      // Direct deletion of the profile causes FK constraint errors
+      // 4. Delete the profile data first - critical fix to avoid FK constraint issues
+      await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.id);
+        
+      console.log("Profile deleted, now deleting user account");
       
-      // 5. Delete the user account itself
-      // This will automatically delete the profile due to the foreign key constraint
+      // 5. Delete the user account itself after deleting profile
       const { error } = await supabase.auth.admin.deleteUser(user.id);
       
       if (error) {
