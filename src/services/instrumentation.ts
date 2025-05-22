@@ -2,6 +2,8 @@
 import { toast } from "sonner";
 import config from "@/config";
 import { supabase } from "@/integrations/supabase/client";
+import * as Sentry from '@sentry/react';
+import posthog from 'posthog-js';
 
 // Time-to-first-value tracking
 interface TTFVData {
@@ -10,39 +12,57 @@ interface TTFVData {
   durationMs: number;
 }
 
-// Define PostHog type as it's not installed yet
-interface PostHogClient {
-  capture: (event: string, properties?: Record<string, any>) => void;
-}
+// Store timing data temporarily
+const ttfvMap = new Map<string, Partial<TTFVData>>();
 
-// This would be initialized when PostHog SDK is installed
-let postHogClient: PostHogClient | null = null;
-
-// Initialize Sentry (to be implemented in Week 4)
+// Initialize Sentry
 export const initSentry = () => {
-  if (process.env.NODE_ENV !== "production") {
+  if (!import.meta.env.PROD) {
     console.log("[Instrumentation] Sentry would be initialized in production");
     return;
   }
-  
-  // Would be implemented in Week 4
-  console.log("[Instrumentation] Sentry initialized");
+
+  try {
+    Sentry.init({
+      dsn: config.externalServices.analytics.sentryDsn,
+      integrations: [
+        new Sentry.BrowserTracing(),
+        new Sentry.Replay()
+      ],
+      // Performance monitoring
+      tracesSampleRate: 0.1,
+      // Session replay for errors
+      replaysSessionSampleRate: 0.1,
+      replaysOnErrorSampleRate: 1.0,
+      environment: import.meta.env.MODE
+    });
+    console.log("[Instrumentation] Sentry initialized");
+  } catch (error) {
+    console.error("[Instrumentation] Failed to initialize Sentry:", error);
+  }
 };
 
-// Initialize PostHog (to be implemented in Week 3)
+// Initialize PostHog
 export const initPostHog = () => {
-  if (process.env.NODE_ENV !== "production") {
+  if (!import.meta.env.PROD) {
     console.log("[Instrumentation] PostHog would be initialized in production");
     return;
   }
   
-  // Would be implemented in Week 3
-  console.log("[Instrumentation] PostHog initialized");
+  try {
+    posthog.init(config.externalServices.analytics.posthogApiKey, {
+      api_host: config.externalServices.analytics.posthogHost,
+      capture_pageview: true,
+      capture_pageleave: true,
+      autocapture: true
+    });
+    console.log("[Instrumentation] PostHog initialized");
+  } catch (error) {
+    console.error("[Instrumentation] Failed to initialize PostHog:", error);
+  }
 };
 
 // Time-to-first-value tracking
-const ttfvMap = new Map<string, Partial<TTFVData>>();
-
 export const markUploadStart = (jobId: string): void => {
   const startTime = performance.now();
   ttfvMap.set(jobId, { uploadStartTime: startTime });
@@ -61,9 +81,9 @@ export const markPreviewReady = (jobId: string): void => {
     
     console.log(`[Instrumentation] Job ${jobId} preview ready at ${previewReadyTime}ms. Total time: ${data.durationMs}ms`);
     
-    // Send to PostHog if available
-    if (postHogClient) {
-      postHogClient.capture('ttfv', { 
+    // Track in analytics system if available
+    if (config.features.enableAnalytics && import.meta.env.PROD) {
+      posthog.capture('ttfv', { 
         ms: data.durationMs, 
         jobId 
       });
@@ -79,13 +99,18 @@ export const markPreviewReady = (jobId: string): void => {
 // Complaints tracking
 export const reportFalsePositive = async (jobId: string): Promise<void> => {
   try {
-    // Update to use the newly added false_positive column
+    // Update to use the false_positive column
     const { error } = await supabase
       .from('jobs')
       .update({ false_positive: true })
       .eq('id', jobId);
     
     if (error) throw error;
+    
+    // Track the false positive report in analytics
+    if (config.features.enableAnalytics && import.meta.env.PROD) {
+      posthog.capture('false_positive_report', { jobId });
+    }
     
     toast.success("Issue reported successfully");
     console.log(`[Instrumentation] Reported false positive for job ${jobId}`);
@@ -95,11 +120,36 @@ export const reportFalsePositive = async (jobId: string): Promise<void> => {
   }
 };
 
-// Crash tracking (placeholder for Sentry integration)
+// Error tracking
 export const logError = (error: Error, context?: Record<string, any>): void => {
   console.error("[Instrumentation] Error:", error, context);
   
-  // Would send to Sentry in Week 4 implementation
+  // Send to Sentry if available
+  if (config.features.enableAnalytics && import.meta.env.PROD) {
+    Sentry.captureException(error, {
+      extra: context
+    });
+  }
 };
 
-// Conversion tracking will be handled by Stripe webhooks in Week 4
+// Track subscription conversions
+export const trackSubscription = (plan: string, userId?: string): void => {
+  if (config.features.enableAnalytics && import.meta.env.PROD) {
+    posthog.capture('subscription_converted', {
+      plan,
+      userId
+    });
+  }
+  
+  console.log(`[Instrumentation] Subscription tracked: ${plan}`);
+};
+
+// Track feature usage
+export const trackFeatureUsage = (feature: string, metadata?: Record<string, any>): void => {
+  if (config.features.enableAnalytics && import.meta.env.PROD) {
+    posthog.capture('feature_used', {
+      feature,
+      ...metadata
+    });
+  }
+};

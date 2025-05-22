@@ -1,5 +1,6 @@
+
 // Application configuration
-export const config = {
+const config = {
   // Supabase configuration 
   supabase: {
     url: import.meta.env.VITE_SUPABASE_URL || "",
@@ -9,7 +10,8 @@ export const config = {
   // Feature flags
   features: {
     enableCloudinary: import.meta.env.VITE_ENABLE_CLOUDINARY === 'true' || false,
-    enableWebAssembly: true, // For client-first light scrubs
+    enableWasmProcessing: import.meta.env.VITE_ENABLE_WASM_PROCESSING === 'true' || true,
+    enableAnalytics: import.meta.env.VITE_ENABLE_ANALYTICS === 'true' || false,
     enableEdgeProcessing: true // For more intensive tasks
   },
   
@@ -18,6 +20,10 @@ export const config = {
     cloudinary: {
       cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "",
     },
+    analytics: {
+      posthogApiKey: import.meta.env.VITE_POSTHOG_API_KEY || "",
+      posthogHost: import.meta.env.VITE_POSTHOG_HOST || "https://app.posthog.com",
+    }
   },
   
   // API endpoints
@@ -70,17 +76,17 @@ export const env = {
   SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || "",
   SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || "",
   
-  // Cloudinary - these are only used on the server side
+  // Cloudinary - client-side safe values only
   CLOUDINARY_CLOUD_NAME: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "",
   
-  // Other services
-  // These are only referenced here to document what's needed,
-  // but they should only be accessed in edge functions
-  // OPENAI_API_KEY: (server-side only)
-  // CLOUDINARY_API_KEY: (server-side only) 
-  // CLOUDINARY_API_SECRET: (server-side only)
-  // STRIPE_SECRET_KEY: (server-side only)
-  // STRIPE_WEBHOOK_SECRET: (server-side only)
+  // Analytics - client-side safe values only
+  POSTHOG_API_KEY: import.meta.env.VITE_POSTHOG_API_KEY || "",
+  POSTHOG_HOST: import.meta.env.VITE_POSTHOG_HOST || "",
+  
+  // Feature flags
+  ENABLE_CLOUDINARY: import.meta.env.VITE_ENABLE_CLOUDINARY === 'true' || false,
+  ENABLE_WASM_PROCESSING: import.meta.env.VITE_ENABLE_WASM_PROCESSING === 'true' || true,
+  ENABLE_ANALYTICS: import.meta.env.VITE_ENABLE_ANALYTICS === 'true' || false,
 };
 
 export default config;

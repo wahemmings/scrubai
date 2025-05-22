@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Subscription } from "@/hooks/useSubscription";
 
 export const checkSubscriptionStatus = async (): Promise<Subscription> => {
@@ -26,10 +26,8 @@ export const createCheckoutSession = async (plan: string): Promise<string | null
     });
     
     if (error) {
-      toast({
-        title: 'Error creating checkout session',
+      toast.error('Error creating checkout session', {
         description: error.message,
-        variant: 'destructive',
       });
       return null;
     }
@@ -37,10 +35,8 @@ export const createCheckoutSession = async (plan: string): Promise<string | null
     return data.url;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    toast({
-      title: 'Error creating checkout session',
+    toast.error('Error creating checkout session', {
       description: errorMessage,
-      variant: 'destructive',
     });
     return null;
   }
@@ -51,22 +47,47 @@ export const openCustomerPortal = async (): Promise<string | null> => {
     const { data, error } = await supabase.functions.invoke('customer-portal');
     
     if (error) {
-      toast({
-        title: 'Error opening customer portal',
+      toast.error('Error opening customer portal', {
         description: error.message,
-        variant: 'destructive',
       });
       return null;
     }
     
-    return data.url;
+    // Open Stripe customer portal in a new tab
+    if (data?.url) {
+      window.open(data.url, '_blank');
+      return data.url;
+    }
+    
+    toast.error('Invalid response from customer portal');
+    return null;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    toast({
-      title: 'Error opening customer portal',
+    toast.error('Error opening customer portal', {
       description: errorMessage,
-      variant: 'destructive',
     });
     return null;
+  }
+};
+
+// Add a function to handle post-checkout updates
+export const handlePostCheckout = async (sessionId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase.functions.invoke('verify-checkout', {
+      body: { sessionId },
+    });
+    
+    if (error) {
+      toast.error('Error verifying checkout', {
+        description: error.message,
+      });
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    console.error('Error verifying checkout:', errorMessage);
+    return false;
   }
 };

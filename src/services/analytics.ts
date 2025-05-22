@@ -1,12 +1,66 @@
 
-import { initPostHog, initSentry } from "./instrumentation";
+import * as Sentry from '@sentry/react';
+import posthog from 'posthog-js';
+import config from '@/config';
+import { markUploadStart, markPreviewReady, reportFalsePositive, logError, initSentry, initPostHog } from './instrumentation';
 
 export const initAnalytics = () => {
-  // Initialize Sentry (scheduled for Week 4)
-  initSentry();
+  if (!config.features.enableAnalytics) {
+    console.log("[Analytics] Analytics disabled by feature flag");
+    return;
+  }
+
+  // Initialize Sentry
+  if (config.externalServices.analytics.sentryDsn) {
+    initSentry();
+  }
   
-  // Initialize PostHog (scheduled for Week 3)
-  initPostHog();
+  // Initialize PostHog
+  if (config.externalServices.analytics.posthogApiKey) {
+    initPostHog();
+  }
   
   console.log("[Analytics] Services initialized");
+};
+
+export const trackEvent = (eventName: string, properties?: Record<string, any>) => {
+  if (!config.features.enableAnalytics) return;
+  
+  // Only track in production to avoid polluting analytics with dev data
+  if (import.meta.env.PROD) {
+    try {
+      // Track in PostHog if available
+      if (posthog.__loaded) {
+        posthog.capture(eventName, properties);
+      }
+      
+      console.log(`[Analytics] Event tracked: ${eventName}`, properties);
+    } catch (error) {
+      console.error('[Analytics] Error tracking event:', error);
+    }
+  }
+};
+
+export const trackError = (error: Error, context?: Record<string, any>) => {
+  if (!config.features.enableAnalytics) return;
+  
+  if (import.meta.env.PROD) {
+    // Log to Sentry if available
+    logError(error, context);
+    
+    // Also track in PostHog as an event
+    trackEvent('error', {
+      message: error.message,
+      stack: error.stack,
+      ...context
+    });
+  } else {
+    console.error('[Analytics] Error:', error, context);
+  }
+};
+
+export {
+  markUploadStart,
+  markPreviewReady,
+  reportFalsePositive,
 };
