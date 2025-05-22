@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { useAppStore } from "@/stores/useAppStore";
 import config from "@/config";
@@ -6,6 +7,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "@/components/ui/use-toast";
 import { markUploadStart } from "@/services/instrumentation";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface FileUploaderProps {
   type: "text" | "document" | "image";
@@ -20,6 +23,7 @@ const FileUploader = ({ type, onFileUploaded }: FileUploaderProps) => {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { decrementCredits, setCurrentJob } = useAppStore();
+  const { user } = useAuth();
   
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -40,6 +44,46 @@ const FileUploader = ({ type, onFileUploaded }: FileUploaderProps) => {
     return file.size <= config.processing.maxFileSizeMB * 1024 * 1024;
   };
   
+  // Get secure upload signature from Supabase edge function
+  const getUploadSignature = async () => {
+    if (!user) {
+      throw new Error("Authentication required");
+    }
+    
+    const { data, error } = await supabase.functions.invoke('generate-upload-signature', {
+      method: 'POST'
+    });
+    
+    if (error) throw error;
+    return data;
+  };
+  
+  // Secure file upload to Cloudinary
+  const secureUploadToCloudinary = async (file: File, signatureData: any) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('api_key', signatureData.apiKey);
+    formData.append('timestamp', signatureData.timestamp.toString());
+    formData.append('signature', signatureData.signature);
+    formData.append('folder', signatureData.folder);
+    formData.append('public_id', signatureData.publicId);
+    formData.append('upload_preset', signatureData.uploadPreset);
+    
+    const cloudName = signatureData.cloudName;
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Upload failed: ${errorData.error?.message || 'Unknown error'}`);
+    }
+    
+    return await response.json();
+  };
+  
+  // Process and upload file
   const processFile = async (file: File) => {
     try {
       setIsProcessing(true);
@@ -72,8 +116,7 @@ const FileUploader = ({ type, onFileUploaded }: FileUploaderProps) => {
       // For text and small documents, use WebAssembly processing (client-first approach)
       if (type === "text" || (type === "document" && file.size < 1 * 1024 * 1024)) {
         if (config.features.enableWebAssembly) {
-          // In a real implementation, we would load and use a WebAssembly module here
-          // For now, we'll simulate processing with a timeout
+          // For text processing, we don't need to upload to Cloudinary
           setTimeout(() => {
             decrementCredits(1);
             onFileUploaded(jobId, { fileName: file.name, fileSize: file.size });
@@ -81,36 +124,58 @@ const FileUploader = ({ type, onFileUploaded }: FileUploaderProps) => {
           }, 800);
         } else {
           // Fall back to server processing if WebAssembly is disabled
-          uploadToServer(file, jobId);
+          await uploadToServer(file, jobId);
         }
       } else {
         // For larger files or images, use server processing
-        uploadToServer(file, jobId);
+        await uploadToServer(file, jobId);
       }
     } catch (err) {
       console.error("Error processing file:", err);
-      setError("An error occurred while processing the file. Please try again.");
+      setError(`An error occurred while processing the file: ${err instanceof Error ? err.message : 'Unknown error'}`);
       setIsProcessing(false);
     }
   };
   
+  // Upload to server with secure Cloudinary
   const uploadToServer = async (file: File, jobId: string) => {
     try {
-      // In a real implementation, we would upload the file to our server
-      // For now, we'll simulate uploading with a timeout
       toast({
         title: "Processing larger file",
         description: "Your file is being processed on our secure servers."
       });
       
-      setTimeout(() => {
-        decrementCredits(type === "image" ? 2 : 1); // Images cost more credits
-        onFileUploaded(jobId, { fileName: file.name, fileSize: file.size });
-        setIsProcessing(false);
-      }, 1500);
+      // Get secure upload signature
+      const signatureData = await getUploadSignature();
+      
+      // Upload to Cloudinary securely
+      const uploadResult = await secureUploadToCloudinary(file, signatureData);
+      
+      // Update the job in the database
+      const { error: jobError } = await supabase
+        .from('jobs')
+        .update({ 
+          original_content_path: uploadResult.public_id,
+          file_name: file.name,
+          file_size: file.size
+        })
+        .eq('id', jobId);
+      
+      if (jobError) {
+        throw new Error(`Failed to update job: ${jobError.message}`);
+      }
+      
+      decrementCredits(type === "image" ? 2 : 1); // Images cost more credits
+      onFileUploaded(jobId, { 
+        fileName: file.name, 
+        fileSize: file.size, 
+        contentPath: uploadResult.public_id,
+        expiresAt: signatureData.expiresAt
+      });
+      setIsProcessing(false);
     } catch (err) {
       console.error("Error uploading file:", err);
-      setError("An error occurred while uploading the file. Please try again.");
+      setError(`Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
       setIsProcessing(false);
     }
   };
