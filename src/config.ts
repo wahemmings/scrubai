@@ -19,7 +19,7 @@ const config = {
   // External services configuration
   externalServices: {
     cloudinary: {
-      cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "",
+      cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "da7q81lrh",
     },
     analytics: {
       posthogApiKey: import.meta.env.VITE_POSTHOG_API_KEY || "",
