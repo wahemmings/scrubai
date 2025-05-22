@@ -9,16 +9,22 @@ interface NavLinksProps {
   mobile?: boolean;
 }
 
+type NavLink = {
+  name: string;
+  href: string;
+  requireAuth?: boolean;
+};
+
 const NavLinks: React.FC<NavLinksProps> = ({ className, mobile = false }) => {
   const { user } = useAuth();
 
-  const links = [
+  const links: NavLink[] = [
     { name: "Home", href: "/" },
     { name: "Dashboard", href: "/app", requireAuth: true },
     { name: "Pricing", href: "/pricing" },
   ];
   
-  const userLinks = user ? [
+  const userLinks: NavLink[] = user ? [
     { name: "Profile", href: "/profile" },
     { name: "API Keys", href: "/api-keys" },
   ] : [];

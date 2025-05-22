@@ -38,13 +38,16 @@ const ApiKeys = () => {
     try {
       // Save to user's metadata in Supabase
       // This is a simplified approach - in production, you'd want more security
-      const { error } = await supabase.from('api_keys').insert({
-        user_id: user.id,
-        name: newKeyName,
-        // Note: In a real app, you'd want to encrypt this value
-        value: newKeyValue,
-        created_at: new Date().toISOString()
-      });
+      // Note: API keys table needs to be created in Supabase
+      const { error } = await supabase
+        .from('api_keys')
+        .insert({
+          user_id: user.id,
+          name: newKeyName,
+          // Note: In a real app, you'd want to encrypt this value
+          value: newKeyValue,
+          created_at: new Date().toISOString()
+        } as any); // Using type assertion as a workaround
 
       if (error) throw error;
 
