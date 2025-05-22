@@ -16,6 +16,13 @@ import { PlusIcon, FilterIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose
+} from "@/components/ui/dialog";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -88,6 +95,15 @@ const Dashboard = () => {
     );
   }
   
+  const handleFileUploaded = (jobId: string, fileData: any) => {
+    toast({
+      title: "Processing complete",
+      description: "Your document has been successfully processed.",
+      variant: "success",
+    });
+    setShowUploader(false);
+  };
+  
   return (
     <div className="flex h-screen bg-background">
       <DashboardSidebar />
@@ -135,55 +151,48 @@ const Dashboard = () => {
             <JobsTable jobs={jobs} isLoading={isLoadingJobs} />
           </div>
           
-          {showUploader && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <Card className="w-full max-w-2xl">
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold">New Document Scrub</h2>
-                    <Button variant="ghost" size="sm" onClick={() => setShowUploader(false)}>
-                      ×
-                    </Button>
-                  </div>
-                  
-                  <Tabs defaultValue="text" className="w-full" onValueChange={(value) => {
-                    setProcessingType(value);
-                  }}>
-                    <TabsList className="mb-6">
-                      <TabsTrigger value="text">Text</TabsTrigger>
-                      <TabsTrigger value="document">Documents</TabsTrigger>
-                      <TabsTrigger value="image">Images</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="text">
-                      <FileUploader 
-                        type="text" 
-                        onFileUploaded={() => {
-                          setShowUploader(false);
-                        }}
-                      />
-                    </TabsContent>
-                    <TabsContent value="document">
-                      <FileUploader 
-                        type="document" 
-                        onFileUploaded={() => {
-                          setShowUploader(false);
-                        }} 
-                      />
-                    </TabsContent>
-                    <TabsContent value="image">
-                      <FileUploader 
-                        type="image" 
-                        onFileUploaded={() => {
-                          setShowUploader(false);
-                        }}
-                      />
-                    </TabsContent>
-                  </Tabs>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+          <Dialog open={showUploader} onOpenChange={setShowUploader}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-semibold">New Document Scrub</DialogTitle>
+              </DialogHeader>
+              
+              <Tabs defaultValue="text" className="w-full" onValueChange={(value) => {
+                setProcessingType(value);
+              }}>
+                <TabsList className="mb-6">
+                  <TabsTrigger value="text">Text</TabsTrigger>
+                  <TabsTrigger value="document">Documents</TabsTrigger>
+                  <TabsTrigger value="image">Images</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="text">
+                  <FileUploader 
+                    type="text" 
+                    onFileUploaded={handleFileUploaded}
+                  />
+                </TabsContent>
+                <TabsContent value="document">
+                  <FileUploader 
+                    type="document" 
+                    onFileUploaded={handleFileUploaded}
+                  /> 
+                </TabsContent>
+                <TabsContent value="image">
+                  <FileUploader 
+                    type="image" 
+                    onFileUploaded={handleFileUploaded}
+                  />
+                </TabsContent>
+              </Tabs>
+              
+              <div className="flex justify-end mt-4">
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>
