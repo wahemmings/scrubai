@@ -2,13 +2,13 @@
 export const config = {
   // Supabase configuration 
   supabase: {
-    url: "https://rysezrtqehpzonflkezr.supabase.co",
-    anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5c2V6cnRxZWhwem9uZmxrZXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NTk0NTIsImV4cCI6MjA2MzQzNTQ1Mn0.iuoDyOtcRhK3CpN1Sf48WGP8Y1YPuSm0SYQ250e1xJE"
+    url: import.meta.env.VITE_SUPABASE_URL || "",
+    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || ""
   },
   
   // Feature flags
   features: {
-    enableCloudinary: true, // Changed to true since Cloudinary keys are now configured
+    enableCloudinary: import.meta.env.VITE_ENABLE_CLOUDINARY === 'true' || false,
     enableWebAssembly: true, // For client-first light scrubs
     enableEdgeProcessing: true // For more intensive tasks
   },
@@ -16,8 +16,7 @@ export const config = {
   // External services configuration
   externalServices: {
     cloudinary: {
-      // No hardcoded values - these will be managed by environment variables
-      // and the secure upload signature flow
+      cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "",
     },
   },
   
@@ -65,17 +64,23 @@ export const config = {
   }
 };
 
-// Environment variables wrapper type-safe access
+// Environment variables wrapper for type-safe access
 export const env = {
   // Supabase
-  SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
-  SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
+  SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || "",
+  SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || "",
   
   // Cloudinary - these are only used on the server side
-  CLOUDINARY_CLOUD_NAME: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_CLOUD_NAME: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "",
   
   // Other services
-  // OpenAI - this is only used server-side
+  // These are only referenced here to document what's needed,
+  // but they should only be accessed in edge functions
+  // OPENAI_API_KEY: (server-side only)
+  // CLOUDINARY_API_KEY: (server-side only) 
+  // CLOUDINARY_API_SECRET: (server-side only)
+  // STRIPE_SECRET_KEY: (server-side only)
+  // STRIPE_WEBHOOK_SECRET: (server-side only)
 };
 
 export default config;

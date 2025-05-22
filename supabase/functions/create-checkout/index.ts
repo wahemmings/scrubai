@@ -35,15 +35,15 @@ serve(async (req) => {
 
     switch (plan) {
       case "basic":
-        priceId = "price_basic"; // Replace with your Stripe price ID
+        priceId = Deno.env.get("STRIPE_PRICE_BASIC") || "price_basic"; // Replace with your Stripe price ID
         planName = "Basic";
         break;
       case "pro":
-        priceId = "price_pro"; // Replace with your Stripe price ID
+        priceId = Deno.env.get("STRIPE_PRICE_PRO") || "price_pro"; // Replace with your Stripe price ID
         planName = "Pro";
         break;
       case "enterprise":
-        priceId = "price_enterprise"; // Replace with your Stripe price ID
+        priceId = Deno.env.get("STRIPE_PRICE_ENTERPRISE") || "price_enterprise"; // Replace with your Stripe price ID
         planName = "Enterprise";
         break;
       default:
