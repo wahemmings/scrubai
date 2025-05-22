@@ -58,7 +58,7 @@ export const PrivacyControls = () => {
         toast({
           title: "Account deletion initiated",
           description: "Your account deletion request is being processed. You've been signed out.",
-          type: "info"
+          type: "warning" // Changed from "info" to "warning" to match the allowed types
         });
         
         // Close dialog and navigate to home
