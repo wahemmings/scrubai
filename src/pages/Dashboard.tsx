@@ -99,7 +99,7 @@ const Dashboard = () => {
     toast({
       title: "Processing complete",
       description: "Your document has been successfully processed.",
-      variant: "success",
+      variant: "default", // Changed from "success" to "default"
     });
     setShowUploader(false);
   };

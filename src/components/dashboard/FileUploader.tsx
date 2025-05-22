@@ -35,7 +35,7 @@ const FileUploader = ({ type, onFileUploaded }: FileUploaderProps) => {
       toast({
         title: "Upload complete",
         description: "Your file has been processed successfully.",
-        variant: "success",
+        variant: "default", // Changed from "success" to "default"
       });
       if (jobId) {
         onFileUploaded(jobId, { success: true });
