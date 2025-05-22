@@ -12,7 +12,6 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     storage: sessionStorage, // Use sessionStorage instead of localStorage for better security
     persistSession: true,
     autoRefreshToken: true,
-    flowType: 'pkce', // Use PKCE flow for better security
   },
   global: {
     headers: {

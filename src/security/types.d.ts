@@ -30,3 +30,15 @@ interface SecurityEvent {
   timestamp: string;
   severity: 'info' | 'warning' | 'critical';
 }
+
+// API key types
+interface ApiKeyRequest {
+  name: string;
+  expiresInDays?: number;
+}
+
+interface ApiKeyResponse {
+  key: string;
+  prefix: string;
+  expiresAt: string;
+}

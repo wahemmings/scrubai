@@ -1,111 +1,155 @@
-
 /**
- * Memory Manager Utility
- * 
- * Handles efficient memory usage and garbage collection for uploads
- * Implements auto-purging of in-memory files to prevent memory leaks
+ * Memory Manager for handling secure upload processes
+ * Prevents memory leaks and ensures data is properly cleared after processing
  */
 
-interface MemoryStats {
-  uploadedFilesInMemory: number;
-  totalBytesInMemory: number;
-  lastGCTime: Date | null;
+interface MemoryItem {
+  data: Uint8Array | ArrayBuffer | Blob;
+  timestamp: number;
+  size: number;
 }
 
-const memoryState: MemoryStats = {
-  uploadedFilesInMemory: 0,
-  totalBytesInMemory: 0,
-  lastGCTime: null
-};
+// Maximum time to keep data in memory (30 minutes)
+const MAX_TTL_MS = 30 * 60 * 1000;
 
-// In-memory file storage with weak references
-const fileMap = new Map<string, WeakRef<Blob | File>>();
-const fileRegistry = new FinalizationRegistry<string>((fileId) => {
-  // Clean up file entry when object is garbage collected
-  if (fileMap.has(fileId)) {
-    fileMap.delete(fileId);
-    memoryState.uploadedFilesInMemory--;
-    console.log(`File ${fileId} was auto-purged by garbage collector`);
-  }
-});
+// Map to track items in memory with timeout handles for cleanup
+const memoryItems = new Map<string, {
+  item: MemoryItem,
+  timeoutId: ReturnType<typeof setTimeout>
+}>();
 
-/**
- * Registers a file in memory for tracking
- */
-export const registerInMemoryFile = (fileId: string, fileData: File | Blob) => {
-  // Create weak reference to allow garbage collection
-  const weakRef = new WeakRef(fileData);
-  fileMap.set(fileId, weakRef);
-  fileRegistry.register(fileData, fileId);
-  
-  memoryState.uploadedFilesInMemory++;
-  memoryState.totalBytesInMemory += fileData.size;
-  
-  console.log(`File ${fileId} registered in memory (${fileData.size} bytes)`);
-  
-  // Auto-purge if we exceed memory thresholds
-  if (memoryState.uploadedFilesInMemory > 5 || memoryState.totalBytesInMemory > 50 * 1024 * 1024) {
-    purgeOldestFiles();
-  }
-};
+// Track objects using WeakRef if available (for more modern browsers)
+let weakRefs: Map<string, any> | null = null;
+let finalizationRegistry: any | null = null;
+
+// Check if browser supports WeakRef and FinalizationRegistry
+const hasWeakRefSupport = typeof globalThis.WeakRef !== 'undefined' && 
+  typeof globalThis.FinalizationRegistry !== 'undefined';
+
+if (hasWeakRefSupport) {
+  weakRefs = new Map();
+  finalizationRegistry = new globalThis.FinalizationRegistry((id: string) => {
+    console.log(`Object with ID ${id} has been garbage-collected`);
+    memoryItems.delete(id);
+  });
+}
 
 /**
- * Purges files from memory
- */
-export const purgeFile = (fileId: string) => {
-  if (fileMap.has(fileId)) {
-    const fileRef = fileMap.get(fileId);
-    const file = fileRef?.deref();
-    if (file) {
-      memoryState.totalBytesInMemory -= file.size;
-    }
-    fileMap.delete(fileId);
-    memoryState.uploadedFilesInMemory--;
-    console.log(`File ${fileId} manually purged from memory`);
-  }
-};
-
-/**
- * Purges the oldest files from memory when thresholds are reached
- */
-const purgeOldestFiles = () => {
-  // In a real implementation, we would track file age and purge oldest first
-  // For this simple implementation, we'll just remove some files
-  const keysToRemove = Array.from(fileMap.keys()).slice(0, 2);
-  keysToRemove.forEach(purgeFile);
-  
-  // Track garbage collection
-  memoryState.lastGCTime = new Date();
-  console.log('Memory cleanup performed', memoryState);
-};
-
-/**
- * Initialize the memory manager
+ * Initializes the memory manager
  */
 export const initMemoryManager = () => {
-  // Set up periodic cleanup
+  // Set up periodic cleanup check every 5 minutes
   const cleanupInterval = setInterval(() => {
-    if (memoryState.uploadedFilesInMemory > 0) {
-      console.log('Periodic memory check', memoryState);
-      
-      // Force garbage collection if supported by environment
-      if (window.gc) {
-        try {
-          window.gc();
-        } catch (e) {
-          console.warn('Failed to force garbage collection');
-        }
+    const now = Date.now();
+    
+    // Check for expired items
+    memoryItems.forEach(({ item, timeoutId }, id) => {
+      if (now - item.timestamp > MAX_TTL_MS) {
+        clearTimeout(timeoutId);
+        memoryItems.delete(id);
+        console.log(`Item ${id} cleared due to expiration`);
+      }
+    });
+    
+    // Force garbage collection on supported platforms
+    if (typeof window.gc === 'function') {
+      try {
+        window.gc();
+        console.log('Forced garbage collection');
+      } catch (e) {
+        console.warn('Failed to force garbage collection');
       }
     }
-  }, 60000); // Check every minute
+  }, 5 * 60 * 1000); // 5 minutes
   
   // Return cleanup function
   return () => {
     clearInterval(cleanupInterval);
+    memoryItems.clear();
   };
 };
 
-// Export memory stats for monitoring
-export const getMemoryStats = (): Readonly<MemoryStats> => {
-  return { ...memoryState };
+/**
+ * Registers data in memory with automatic cleanup
+ * @param data The data to store
+ * @param id Optional ID for the data
+ * @returns The ID assigned to the data
+ */
+export const registerMemoryItem = (
+  data: Uint8Array | ArrayBuffer | Blob, 
+  id: string = crypto.randomUUID()
+): string => {
+  // Clear previous item with same ID if it exists
+  if (memoryItems.has(id)) {
+    const { timeoutId } = memoryItems.get(id)!;
+    clearTimeout(timeoutId);
+  }
+  
+  // Create new memory item
+  const item: MemoryItem = {
+    data,
+    timestamp: Date.now(),
+    size: data instanceof Blob ? data.size : data.byteLength
+  };
+  
+  // Set up automatic cleanup
+  const timeoutId = setTimeout(() => {
+    memoryItems.delete(id);
+    console.log(`Item ${id} automatically cleared after timeout`);
+  }, MAX_TTL_MS);
+  
+  // Store the item
+  memoryItems.set(id, { item, timeoutId });
+  
+  // Register with FinalizationRegistry if supported
+  if (hasWeakRefSupport && weakRefs && finalizationRegistry) {
+    const weakRef = new globalThis.WeakRef(data);
+    weakRefs.set(id, weakRef);
+    finalizationRegistry.register(data, id);
+  }
+  
+  console.log(`Registered memory item ${id} of size ${item.size} bytes`);
+  return id;
+};
+
+/**
+ * Gets data from memory
+ * @param id The ID of the data
+ * @returns The data or null if not found
+ */
+export const getMemoryItem = (id: string): MemoryItem['data'] | null => {
+  const entry = memoryItems.get(id);
+  if (!entry) return null;
+  
+  // Update timestamp to extend TTL
+  entry.item.timestamp = Date.now();
+  return entry.item.data;
+};
+
+/**
+ * Explicitly clears data from memory
+ * @param id The ID of the data to clear
+ */
+export const clearMemoryItem = (id: string): boolean => {
+  if (!memoryItems.has(id)) return false;
+  
+  const { timeoutId } = memoryItems.get(id)!;
+  clearTimeout(timeoutId);
+  memoryItems.delete(id);
+  
+  if (weakRefs) weakRefs.delete(id);
+  
+  console.log(`Explicitly cleared memory item ${id}`);
+  return true;
+};
+
+/**
+ * Gets the total size of all items in memory
+ */
+export const getMemoryUsage = (): number => {
+  let totalSize = 0;
+  memoryItems.forEach(({ item }) => {
+    totalSize += item.size;
+  });
+  return totalSize;
 };

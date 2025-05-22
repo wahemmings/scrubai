@@ -48,7 +48,7 @@ const ApiKeys = () => {
         .eq('user_id', user?.id);
 
       if (error) throw error;
-      setApiKeys(data || []);
+      setApiKeys(data as ApiKey[] || []);
     } catch (error) {
       console.error("Error loading API keys:", error);
       toast({

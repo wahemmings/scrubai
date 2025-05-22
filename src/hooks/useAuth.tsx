@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           toast({
             title: "Password recovery initiated",
             description: "Follow the instructions in your email to reset your password.",
-            type: "info"
+            type: "warning"
           });
         } else if (event === 'TOKEN_REFRESHED') {
           // Silent refresh, no toast needed
@@ -91,11 +91,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ 
         email, 
-        password,
-        options: {
-          // Use PKCE flow for added security
-          flowType: 'pkce'
-        }
+        password
       });
       return { error };
     } catch (e) {
@@ -110,9 +106,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         email, 
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth`,
-          // Use PKCE flow for added security
-          flowType: 'pkce'
+          emailRedirectTo: `${window.location.origin}/auth`
         }
       });
       return { error };
@@ -133,7 +127,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/app`,
-        flowType: 'pkce', // Use PKCE flow for added security
         queryParams: {
           access_type: 'offline', // Get refresh token
           prompt: 'consent'
