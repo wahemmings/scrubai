@@ -19,9 +19,10 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
     try {
       // Attempt to get upload signature from edge function
       signatureData = await getUploadSignature(user);
+      console.log("Successfully received upload signature from edge function:", signatureData);
     } catch (error) {
       console.error("Edge function error:", error);
-      toast.error("Edge function unavailable", {
+      toast.warning("Edge function unavailable", {
         description: "Using mock data for testing. In production, enable edge functions."
       });
       
@@ -36,6 +37,7 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
         cloudName: "demo",
         expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutes
       };
+      console.log("Created mock signature for testing:", signatureData);
     }
     
     if (!signatureData || !signatureData.signature) {
@@ -73,6 +75,7 @@ export const uploadTestFile = async (user: any): Promise<void> => {
     try {
       // Attempt to get upload signature from edge function
       signatureData = await getUploadSignature(user);
+      console.log("Successfully received upload signature for test file:", signatureData);
     } catch (error) {
       console.error("Edge function error:", error);
       toast.warning("Edge function unavailable", {
@@ -91,6 +94,7 @@ export const uploadTestFile = async (user: any): Promise<void> => {
         apiKey: "mock_api_key",
         expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutes
       };
+      console.log("Created mock signature for test file upload:", signatureData);
     }
     
     // Start upload
@@ -99,6 +103,7 @@ export const uploadTestFile = async (user: any): Promise<void> => {
     try {
       // Upload to Cloudinary
       const result = await secureUploadToCloudinary(testFile, signatureData);
+      console.log("Test file upload result:", result);
       
       if (result && result.public_id) {
         toast.success("Test file uploaded successfully", {

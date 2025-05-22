@@ -76,7 +76,8 @@ export const uploadToServer = async (file: File, jobId: string, user: any) => {
       toast({
         title: "Edge function unavailable",
         description: "Using development mode. In production, uploads will be secured via edge functions.",
-        variant: "warning"
+        // Fix the TypeScript error here - "warning" is not a valid variant type
+        variant: "default" // Changed from "warning" to "default"
       });
       
       // Create mock signature data for development
@@ -93,8 +94,18 @@ export const uploadToServer = async (file: File, jobId: string, user: any) => {
       };
     }
     
+    // Log information about the upload for debugging
+    console.log("Attempting to upload to Cloudinary with:", { 
+      fileName: file.name, 
+      fileSize: file.size,
+      uploadPreset: signatureData.uploadPreset,
+      folder: signatureData.folder,
+      cloudName: signatureData.cloudName
+    });
+    
     // Upload to Cloudinary securely
     const uploadResult = await secureUploadToCloudinary(file, signatureData);
+    console.log("Cloudinary upload result:", uploadResult);
     
     // Update the job in the database
     const { error: jobError } = await supabase

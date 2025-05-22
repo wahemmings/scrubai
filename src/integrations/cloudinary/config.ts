@@ -19,11 +19,14 @@ export const getCloudinaryUrl = (publicId: string, options = {}): string => {
   
   // For mock data, return placeholder image
   if (publicId.startsWith("mock_") || cloudinaryConfig.cloudName === "demo") {
+    console.log("Using placeholder image for mock data");
     return "https://via.placeholder.com/800x600?text=Test+Image";
   }
   
   // Base URL for Cloudinary resources
-  return `https://res.cloudinary.com/${cloudinaryConfig.cloudName}/image/upload/${publicId}`;
+  const cloudinaryUrl = `https://res.cloudinary.com/${cloudinaryConfig.cloudName}/image/upload/${publicId}`;
+  console.log("Generated Cloudinary URL:", cloudinaryUrl);
+  return cloudinaryUrl;
 };
 
 export const getCloudinaryThumbnailUrl = (publicId: string, width = 200): string => {
@@ -31,9 +34,12 @@ export const getCloudinaryThumbnailUrl = (publicId: string, width = 200): string
   
   // For mock data, return placeholder image
   if (publicId.startsWith("mock_") || cloudinaryConfig.cloudName === "demo") {
+    console.log("Using placeholder thumbnail for mock data");
     return `https://via.placeholder.com/${width}x${width}?text=Thumbnail`;
   }
   
   // Generate thumbnail URL with specified width
-  return `https://res.cloudinary.com/${cloudinaryConfig.cloudName}/image/upload/c_thumb,w_${width}/${publicId}`;
+  const thumbnailUrl = `https://res.cloudinary.com/${cloudinaryConfig.cloudName}/image/upload/c_thumb,w_${width}/${publicId}`;
+  console.log("Generated Cloudinary thumbnail URL:", thumbnailUrl);
+  return thumbnailUrl;
 };

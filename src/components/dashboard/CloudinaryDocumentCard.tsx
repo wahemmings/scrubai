@@ -60,7 +60,7 @@ const CloudinaryDocumentCard: React.FC<CloudinaryDocumentCardProps> = ({
     e.currentTarget.style.display = 'none';
     
     // Create a container for the icon
-    const iconElement = window.document.createElement('div');
+    const iconElement = document.createElement('div');
     iconElement.className = 'flex items-center justify-center h-20 w-20';
     
     // Append to parent element
@@ -79,7 +79,7 @@ const CloudinaryDocumentCard: React.FC<CloudinaryDocumentCardProps> = ({
         "text-muted-foreground";
       
       // Create a simple div to show instead of React component
-      const iconDiv = window.document.createElement('div');
+      const iconDiv = document.createElement('div');
       iconDiv.className = `h-10 w-10 ${iconColor} flex items-center justify-center`;
       iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
       
