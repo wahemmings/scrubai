@@ -16,7 +16,6 @@ const FileUploader = ({ type, onFileUploaded }: FileUploaderProps) => {
   const [fileContent, setFileContent] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const { toast } = useToast();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { decrementCredits, setCurrentJob } = useAppStore();

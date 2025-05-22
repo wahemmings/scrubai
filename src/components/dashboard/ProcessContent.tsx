@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
@@ -21,7 +20,9 @@ export const ProcessContent = ({ type, content, options, onReset }: ProcessConte
 
   const handleStartProcessing = async () => {
     if (!content) {
-      toast.error("No content to process");
+      toast.error("No content to process", {
+        description: "Please upload or enter content first"
+      });
       return;
     }
     

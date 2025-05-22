@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import type {
@@ -13,6 +14,7 @@ type ToasterToast = ToastProps & {
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  type?: "default" | "success" | "error" | "warning"
 }
 
 const actionTypes = {
@@ -139,7 +141,7 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
-function toast({ ...props }: Toast) {
+function toast(props: Toast) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
@@ -167,6 +169,19 @@ function toast({ ...props }: Toast) {
     update,
   }
 }
+
+// Helper functions for different toast types
+toast.success = (title: string, options: Omit<Toast, "title" | "type"> = {}) => {
+  return toast({ title, ...options, type: "success", variant: "default" });
+};
+
+toast.error = (title: string, options: Omit<Toast, "title" | "type"> = {}) => {
+  return toast({ title, ...options, type: "error", variant: "destructive" });
+};
+
+toast.warning = (title: string, options: Omit<Toast, "title" | "type"> = {}) => {
+  return toast({ title, ...options, type: "warning", variant: "default" });
+};
 
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
