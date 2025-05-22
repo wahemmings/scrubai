@@ -1,0 +1,29 @@
+
+import config from "@/config";
+
+// Cloudinary configuration
+export const cloudinaryConfig = {
+  cloudName: config.externalServices.cloudinary.cloudName,
+  enabled: config.features.enableCloudinary,
+  uploadPreset: "scrubai_secure",
+  folder: "scrubai_docs",
+};
+
+// Helper functions
+export const isCloudinaryEnabled = (): boolean => {
+  return cloudinaryConfig.enabled && !!cloudinaryConfig.cloudName;
+};
+
+export const getCloudinaryUrl = (publicId: string, options = {}): string => {
+  if (!isCloudinaryEnabled() || !publicId) return "";
+  
+  // Base URL for Cloudinary resources
+  return `https://res.cloudinary.com/${cloudinaryConfig.cloudName}/image/upload/${publicId}`;
+};
+
+export const getCloudinaryThumbnailUrl = (publicId: string, width = 200): string => {
+  if (!isCloudinaryEnabled() || !publicId) return "";
+  
+  // Generate thumbnail URL with specified width
+  return `https://res.cloudinary.com/${cloudinaryConfig.cloudName}/image/upload/c_thumb,w_${width}/${publicId}`;
+};

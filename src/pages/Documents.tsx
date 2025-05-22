@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
-import { FileText, Plus, Search, Filter, Trash2, Check, Upload } from "lucide-react";
+import { FileText, Plus, Search, Filter, Trash2, Check, Upload, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +22,9 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import FileUploader from "@/components/dashboard/FileUploader";
+import { testCloudinaryConnection, uploadTestFile } from "@/utils/cloudinaryTest";
+import { isCloudinaryEnabled } from "@/integrations/cloudinary/config";
+import CloudinaryDocumentCard from "@/components/dashboard/CloudinaryDocumentCard";
 
 interface Document {
   id: number;
@@ -31,6 +33,7 @@ interface Document {
   size: string;
   lastModified: string;
   selected?: boolean;
+  contentPath?: string;
 }
 
 const Documents = () => {
@@ -41,6 +44,7 @@ const Documents = () => {
   const [selectedDocuments, setSelectedDocuments] = useState<number[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -120,11 +124,30 @@ const Documents = () => {
       lastModified: new Date().getFullYear() + "-" + 
                     String(new Date().getMonth() + 1).padStart(2, '0') + "-" + 
                     String(new Date().getDate()).padStart(2, '0'),
+      contentPath: fileData.contentPath || null,
     };
     
     setDocuments([newDocument, ...documents]);
     setUploadDialogOpen(false);
     toast.success("Document uploaded successfully!");
+  };
+
+  const handleTestCloudinary = async () => {
+    if (!user) {
+      toast.error("You need to be logged in to test Cloudinary");
+      return;
+    }
+    
+    await testCloudinaryConnection(user);
+  };
+
+  const handleUploadTestFile = async () => {
+    if (!user) {
+      toast.error("You need to be logged in to upload test file");
+      return;
+    }
+    
+    await uploadTestFile(user);
   };
 
   return (
@@ -173,6 +196,16 @@ const Documents = () => {
                   <Button variant="outline" onClick={toggleSelectionMode}>
                     Select
                   </Button>
+                  {isCloudinaryEnabled() && (
+                    <Button 
+                      variant="outline" 
+                      className="gap-2"
+                      onClick={() => setTestDialogOpen(true)}
+                    >
+                      <Wrench className="h-4 w-4" />
+                      Test Cloudinary
+                    </Button>
+                  )}
                   <Button onClick={() => setUploadDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Upload Document
@@ -193,6 +226,34 @@ const Documents = () => {
                   type="document" 
                   onFileUploaded={handleFileUploaded} 
                 />
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Cloudinary test dialog */}
+          <Dialog open={testDialogOpen} onOpenChange={setTestDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Test Cloudinary Integration</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <p className="text-sm text-muted-foreground">
+                  Test your Cloudinary integration with these options:
+                </p>
+                <div className="flex flex-col gap-4">
+                  <Button onClick={handleTestCloudinary}>
+                    Test Connection
+                  </Button>
+                  <Button variant="outline" onClick={handleUploadTestFile}>
+                    Upload Test File
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-4">
+                  Cloudinary Status: {isCloudinaryEnabled() ? 
+                    <span className="text-green-500 font-medium">Enabled</span> : 
+                    <span className="text-red-500 font-medium">Disabled</span>
+                  }
+                </p>
               </div>
             </DialogContent>
           </Dialog>
@@ -226,57 +287,66 @@ const Documents = () => {
               ) : documents.length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-3">
                   {documents.map(doc => (
-                    <Card 
-                      key={doc.id} 
-                      className={`cursor-pointer ${isSelectionMode ? 'relative' : ''} hover:bg-accent/50 transition-colors`}
-                    >
-                      <CardContent className="pt-6">
-                        {isSelectionMode && (
-                          <div className="absolute top-2 left-2">
-                            <Checkbox 
-                              checked={selectedDocuments.includes(doc.id)}
-                              onCheckedChange={() => toggleSelection(doc.id)}
-                              aria-label={`Select ${doc.name}`}
-                            />
+                    doc.contentPath ? (
+                      <CloudinaryDocumentCard
+                        key={doc.id}
+                        document={doc}
+                        isSelectable={isSelectionMode}
+                        isSelected={selectedDocuments.includes(doc.id)}
+                      />
+                    ) : (
+                      <Card 
+                        key={doc.id} 
+                        className={`cursor-pointer ${isSelectionMode ? 'relative' : ''} hover:bg-accent/50 transition-colors`}
+                      >
+                        <CardContent className="pt-6">
+                          {isSelectionMode && (
+                            <div className="absolute top-2 left-2">
+                              <Checkbox 
+                                checked={selectedDocuments.includes(doc.id)}
+                                onCheckedChange={() => toggleSelection(doc.id)}
+                                aria-label={`Select ${doc.name}`}
+                              />
+                            </div>
+                          )}
+                          <div className="flex items-center justify-center h-20 w-20 bg-primary/10 rounded mx-auto mb-4">
+                            <FileText className="h-10 w-10 text-primary" />
                           </div>
-                        )}
-                        <div className="flex items-center justify-center h-20 w-20 bg-primary/10 rounded mx-auto mb-4">
-                          <FileText className="h-10 w-10 text-primary" />
-                        </div>
-                        <h3 className="font-medium text-center">{doc.name}</h3>
-                        <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                          <span>{doc.type}</span>
-                          <span>{doc.size}</span>
-                        </div>
-                        <p className="text-xs text-center text-muted-foreground mt-2">
-                          Last modified: {doc.lastModified}
-                        </p>
-                        
-                        {!isSelectionMode && (
-                          <div className="mt-4 flex justify-end">
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <Trash2 className="h-4 w-4 text-muted-foreground" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete document?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete "{doc.name}"? This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => deleteDocument(doc.id)}>Delete</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                          <h3 className="font-medium text-center">{doc.name}</h3>
+                          <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                            <span>{doc.type}</span>
+                            <span>{doc.size}</span>
                           </div>
-                        )}
-                      </CardContent>
-                    </Card>
+                          <p className="text-xs text-center text-muted-foreground mt-2">
+                            Last modified: {doc.lastModified}
+                          </p>
+                          
+                          {!isSelectionMode && (
+                            <div className="mt-4 flex justify-end">
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete document?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete "{doc.name}"? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => deleteDocument(doc.id)}>Delete</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )
                   ))}
                 </div>
               ) : (

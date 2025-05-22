@@ -9,7 +9,8 @@ const config = {
   
   // Feature flags
   features: {
-    enableCloudinary: import.meta.env.VITE_ENABLE_CLOUDINARY === 'true' || false,
+    // Enable Cloudinary by default for easier testing
+    enableCloudinary: import.meta.env.VITE_ENABLE_CLOUDINARY === 'true' || true,
     enableWasmProcessing: import.meta.env.VITE_ENABLE_WASM_PROCESSING === 'true' || true,
     enableAnalytics: import.meta.env.VITE_ENABLE_ANALYTICS === 'true' || false,
     enableEdgeProcessing: true // For more intensive tasks
@@ -86,7 +87,7 @@ export const env = {
   SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN || "",
   
   // Feature flags
-  ENABLE_CLOUDINARY: import.meta.env.VITE_ENABLE_CLOUDINARY === 'true' || false,
+  ENABLE_CLOUDINARY: import.meta.env.VITE_ENABLE_CLOUDINARY === 'true' || true,
   ENABLE_WASM_PROCESSING: import.meta.env.VITE_ENABLE_WASM_PROCESSING === 'true' || true,
   ENABLE_ANALYTICS: import.meta.env.VITE_ENABLE_ANALYTICS === 'true' || false,
 };
