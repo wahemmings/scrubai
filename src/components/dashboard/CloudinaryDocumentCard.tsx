@@ -63,12 +63,13 @@ const CloudinaryDocumentCard: React.FC<CloudinaryDocumentCardProps> = ({
     const parentElement = e.currentTarget.parentElement;
     if (parentElement) {
       // Create a container for the icon and add appropriate styling
-      const iconContainer = document.createElement('div');
+      // Using window.document instead of document to avoid confusion with our prop
+      const iconContainer = window.document.createElement('div');
       iconContainer.className = 'flex items-center justify-center h-20 w-20';
       
       // Add icon SVG based on document type
       const docType = document.type.toLowerCase();
-      const iconSvg = document.createElement('div');
+      const iconSvg = window.document.createElement('div');
       
       const iconColor = 
         docType === "pdf" ? "text-primary" : 
