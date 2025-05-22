@@ -2,6 +2,7 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Upload, FileType, ImageIcon } from "lucide-react";
 import config from "@/config";
 
 interface FileDropZoneProps {
@@ -45,6 +46,9 @@ const FileDropZone = ({ type, isProcessing, onFileSelected, error }: FileDropZon
     }
   };
   
+  // Determine which icon to use based on type
+  const IconComponent = type === "document" ? FileType : ImageIcon;
+  
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">
@@ -61,26 +65,34 @@ const FileDropZone = ({ type, isProcessing, onFileSelected, error }: FileDropZon
       />
       
       <div 
-        className={`dropzone ${isDragging ? 'dropzone-active' : ''} min-h-[300px]`}
+        className={`dropzone ${isDragging ? 'dropzone-active' : ''} min-h-[300px] transition-all bg-muted/30 dark:bg-muted/10`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={handleClick}
       >
         <div className="flex flex-col items-center justify-center h-full">
-          <div className="w-12 h-12 bg-scrub-blue/10 rounded-full flex items-center justify-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-scrub-blue">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-          </div>
-          <p className="font-medium">{isProcessing ? "Processing file..." : "Drag & drop or click to upload"}</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            {type === "document" 
-              ? `Supports ${config.processing.supportedFormats.document.join(', ')} files up to ${config.processing.maxFileSizeMB}MB` 
-              : `Supports ${config.processing.supportedFormats.image.join(', ')} files up to ${config.processing.maxFileSizeMB}MB`}
-          </p>
+          {isProcessing ? (
+            <div className="flex flex-col items-center space-y-4">
+              <div className="animate-spin">
+                <Upload className="h-12 w-12 text-scrub-blue" />
+              </div>
+              <p className="font-medium text-center">Processing file...</p>
+              <p className="text-sm text-muted-foreground">This might take a moment</p>
+            </div>
+          ) : (
+            <>
+              <div className="w-16 h-16 bg-scrub-blue/10 rounded-full flex items-center justify-center mb-4 transition-all group-hover:bg-scrub-blue/20">
+                <IconComponent className="h-8 w-8 text-scrub-blue" />
+              </div>
+              <p className="font-medium">Drag & drop or click to upload</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {type === "document" 
+                  ? `Supports ${config.processing.supportedFormats.document.join(', ')} files up to ${config.processing.maxFileSizeMB}MB` 
+                  : `Supports ${config.processing.supportedFormats.image.join(', ')} files up to ${config.processing.maxFileSizeMB}MB`}
+              </p>
+            </>
+          )}
         </div>
       </div>
       
