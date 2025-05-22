@@ -3,6 +3,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAppStore } from "@/stores/useAppStore";
 import { Progress } from "@/components/ui/progress";
+import { useEffect } from "react";
+import { markPreviewReady } from "@/services/instrumentation";
+import ReportIssueButton from "./ReportIssueButton";
 
 interface FileDisplayPanelProps {
   isOriginal: boolean;
@@ -12,6 +15,13 @@ interface FileDisplayPanelProps {
 export const FileDisplayPanel = ({ isOriginal, content }: FileDisplayPanelProps) => {
   const { currentJob } = useAppStore();
   const title = isOriginal ? "Original" : "Scrubbed";
+
+  // Mark preview ready when the job is completed
+  useEffect(() => {
+    if (!isOriginal && currentJob && currentJob.status === 'completed') {
+      markPreviewReady(currentJob.id);
+    }
+  }, [isOriginal, currentJob?.status, currentJob?.id]);
 
   const renderContent = () => {
     if (isOriginal) {
@@ -101,6 +111,12 @@ export const FileDisplayPanel = ({ isOriginal, content }: FileDisplayPanelProps)
         <div className={`${!isOriginal ? "relative " : ""}min-h-[300px] border rounded-md p-4 bg-muted/30 overflow-auto`}>
           {renderContent()}
         </div>
+        
+        {!isOriginal && currentJob && currentJob.status === 'completed' && (
+          <div className="mt-4 flex justify-end">
+            <ReportIssueButton jobId={currentJob.id} />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

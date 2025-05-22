@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider"
 import Landing from "@/pages/Landing";
@@ -11,11 +11,17 @@ import NotFound from "@/pages/NotFound";
 import Layout from "@/components/layout/Layout";
 import { Toaster } from "@/components/ui/sonner"
 import { AuthProvider } from "@/hooks/useAuth";
+import { initAnalytics } from "@/services/analytics";
 
 // Import ApiKeysPage
 import ApiKeysPage from "./features/api-keys/ApiKeysPage";
 
 function App() {
+  useEffect(() => {
+    // Initialize analytics and error tracking services
+    initAnalytics();
+  }, []);
+
   return (
     <BrowserRouter>
       <ThemeProvider defaultTheme="system" storageKey="ui-theme">

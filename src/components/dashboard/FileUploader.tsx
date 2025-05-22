@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "@/components/ui/use-toast";
+import { markUploadStart } from "@/services/instrumentation";
 
 interface FileUploaderProps {
   type: "text" | "document" | "image";
@@ -56,6 +57,9 @@ const FileUploader = ({ type, onFileUploaded }: FileUploaderProps) => {
       
       // Generate a unique job ID
       const jobId = uuidv4();
+      
+      // Start tracking time-to-first-value
+      markUploadStart(jobId);
       
       // Create a job entry in our store
       setCurrentJob({
