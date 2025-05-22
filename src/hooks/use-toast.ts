@@ -170,22 +170,28 @@ function toast(props: Toast) {
   }
 }
 
-// Fixed type definitions for helper functions
-interface ToastOptions extends Omit<Toast, "title" | "type"> {
+// Properly typed helper interface for toast options
+interface ToastOptions {
   description?: React.ReactNode;
+  variant?: "default" | "destructive";
+  action?: ToastActionElement;
+  // Add any other properties from Toast except 'title' and 'type'
+  duration?: number;
+  className?: string;
+  onOpenChange?: (open: boolean) => void;
 }
 
-// Helper functions for different toast types
+// Helper functions with fixed typings
 toast.success = (title: string, options: ToastOptions = {}) => {
-  return toast({ title, ...options, type: "success", variant: "default" });
+  return toast({ title, type: "success", variant: "default", ...options });
 };
 
 toast.error = (title: string, options: ToastOptions = {}) => {
-  return toast({ title, ...options, type: "error", variant: "destructive" });
+  return toast({ title, type: "error", variant: "destructive", ...options });
 };
 
 toast.warning = (title: string, options: ToastOptions = {}) => {
-  return toast({ title, ...options, type: "warning", variant: "default" });
+  return toast({ title, type: "warning", variant: "default", ...options });
 };
 
 function useToast() {
