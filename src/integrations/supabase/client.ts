@@ -6,12 +6,18 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://rysezrtqehpzonflkezr.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5c2V6cnRxZWhwem9uZmxrZXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NTk0NTIsImV4cCI6MjA2MzQzNTQ1Mn0.iuoDyOtcRhK3CpN1Sf48WGP8Y1YPuSm0SYQ250e1xJE";
 
-// Configure the Supabase client with proper auth settings
+// Configure the Supabase client with enhanced security settings (PKCE flow and sessionStorage)
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
-    storage: localStorage,
+    storage: sessionStorage, // Use sessionStorage instead of localStorage for better security
     persistSession: true,
     autoRefreshToken: true,
+    flowType: 'pkce', // Use PKCE flow for better security
+  },
+  global: {
+    headers: {
+      'Content-Security-Policy': "default-src 'self'; script-src 'self'; object-src 'none';"
+    },
   }
 });
 

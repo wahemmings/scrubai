@@ -2,7 +2,7 @@
 import { useEffect, useState, createContext, useContext } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 type AuthContextType = {
   session: Session | null;
@@ -42,11 +42,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           toast({
             title: "Signed in successfully",
             description: `Welcome${session?.user?.email ? `, ${session.user.email}` : ''}!`,
+            type: "success"
+          });
+          
+          // Log security event (in a real app, this would go to a security monitoring system)
+          console.log('Security event: user_signed_in', {
+            user_id: session?.user?.id,
+            timestamp: new Date().toISOString(),
+            method: 'password', // simplified for demo
+            ip_address: 'client-side' // in real app, this would be captured server-side
           });
         } else if (event === 'SIGNED_OUT') {
+          // Clear any sensitive data from memory
+          sessionStorage.removeItem('tempUserData');
+          
           toast({
             title: "Signed out successfully",
             description: "You have been signed out.",
+            type: "success"
+          });
+        } else if (event === 'PASSWORD_RECOVERY') {
+          toast({
+            title: "Password recovery initiated",
+            description: "Follow the instructions in your email to reset your password.",
+            type: "info"
+          });
+        } else if (event === 'TOKEN_REFRESHED') {
+          // Silent refresh, no toast needed
+          console.log('Security event: token_refreshed', {
+            user_id: session?.user?.id,
+            timestamp: new Date().toISOString()
           });
         }
       }
@@ -64,7 +89,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password,
+        options: {
+          // Use PKCE flow for added security
+          flowType: 'pkce'
+        }
+      });
       return { error };
     } catch (e) {
       const error = e as Error;
@@ -78,7 +110,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         email, 
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth`
+          emailRedirectTo: `${window.location.origin}/auth`,
+          // Use PKCE flow for added security
+          flowType: 'pkce'
         }
       });
       return { error };
@@ -89,6 +123,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
+    // Clear any cached data first
+    sessionStorage.clear();
     await supabase.auth.signOut();
   };
 
@@ -97,6 +133,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/app`,
+        flowType: 'pkce', // Use PKCE flow for added security
+        queryParams: {
+          access_type: 'offline', // Get refresh token
+          prompt: 'consent'
+        }
       },
     });
   };

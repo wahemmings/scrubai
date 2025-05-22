@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,9 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { UserRound, CreditCard, Calendar, Hourglass } from "lucide-react";
+import { UserRound, CreditCard, Calendar, Hourglass, Shield } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { PrivacyControls } from "@/components/compliance/PrivacyControls";
 
 type ProfileData = {
   id: string;
@@ -326,6 +326,24 @@ const Profile = () => {
                 <Button variant="outline" size="sm">View All Jobs</Button>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Security & Compliance Card */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-4">
+              <div className="p-2 rounded-full bg-primary/10">
+                <Shield className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Security & Compliance</CardTitle>
+                <CardDescription>Privacy and security settings</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <PrivacyControls />
           </CardContent>
         </Card>
       </div>
