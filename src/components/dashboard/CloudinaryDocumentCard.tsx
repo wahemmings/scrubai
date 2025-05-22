@@ -68,11 +68,30 @@ const CloudinaryDocumentCard: React.FC<CloudinaryDocumentCardProps> = ({
               onError={(e) => {
                 // Fallback to icon if image fails to load
                 e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement?.appendChild(
-                  document.createElement('div')
-                ).appendChild(
-                  getDocumentIcon()
-                );
+                
+                // Use global document object instead of the document prop
+                const iconElement = window.document.createElement('div');
+                iconElement.className = 'flex items-center justify-center h-20 w-20';
+                const iconContent = getDocumentIcon();
+                
+                // Use React to render the icon into the new div
+                const parentElement = e.currentTarget.parentElement;
+                if (parentElement) {
+                  parentElement.appendChild(iconElement);
+                  
+                  // We need to use ReactDOM to render the React element into the DOM
+                  // This is a simple workaround to show the icon
+                  const tempDiv = window.document.createElement('div');
+                  tempDiv.innerHTML = `<div class="h-10 w-10 ${
+                    document.type.toLowerCase() === "pdf" ? "text-primary" : 
+                    ["docx", "doc"].includes(document.type.toLowerCase()) ? "text-blue-500" : 
+                    ["xlsx", "xls"].includes(document.type.toLowerCase()) ? "text-green-500" : 
+                    ["jpg", "jpeg", "png", "webp", "gif"].includes(document.type.toLowerCase()) ? "text-purple-500" : 
+                    "text-muted-foreground"
+                  }"></div>`;
+                  
+                  iconElement.appendChild(tempDiv);
+                }
               }}
             />
           ) : (
