@@ -55,6 +55,38 @@ const CloudinaryDocumentCard: React.FC<CloudinaryDocumentCardProps> = ({
 
   const thumbnailUrl = getThumbnailUrl();
 
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    // Fallback to icon if image fails to load
+    e.currentTarget.style.display = 'none';
+    
+    // Create a container for the icon
+    const iconElement = window.document.createElement('div');
+    iconElement.className = 'flex items-center justify-center h-20 w-20';
+    
+    // Append to parent element
+    const parentElement = e.currentTarget.parentElement;
+    if (parentElement) {
+      // Add the container to the DOM
+      parentElement.appendChild(iconElement);
+      
+      // Create icon element with proper styling based on document type
+      const docType = document.type.toLowerCase();
+      const iconColor = 
+        docType === "pdf" ? "text-primary" : 
+        ["docx", "doc"].includes(docType) ? "text-blue-500" : 
+        ["xlsx", "xls"].includes(docType) ? "text-green-500" : 
+        ["jpg", "jpeg", "png", "webp", "gif"].includes(docType) ? "text-purple-500" : 
+        "text-muted-foreground";
+      
+      // Create a simple div to show instead of React component
+      const iconDiv = window.document.createElement('div');
+      iconDiv.className = `h-10 w-10 ${iconColor} flex items-center justify-center`;
+      iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
+      
+      iconElement.appendChild(iconDiv);
+    }
+  };
+
   return (
     <Card className={`cursor-pointer ${isSelectable ? 'relative' : ''} hover:bg-accent/50 transition-colors`}>
       <CardContent className="pt-6">
@@ -65,37 +97,7 @@ const CloudinaryDocumentCard: React.FC<CloudinaryDocumentCardProps> = ({
               src={thumbnailUrl} 
               alt={document.name} 
               className="max-h-full max-w-full object-contain"
-              onError={(e) => {
-                // Fallback to icon if image fails to load
-                e.currentTarget.style.display = 'none';
-                
-                // Create a container for the icon
-                const iconElement = window.document.createElement('div');
-                iconElement.className = 'flex items-center justify-center h-20 w-20';
-                
-                // Append to parent element
-                const parentElement = e.currentTarget.parentElement;
-                if (parentElement) {
-                  // Add the container to the DOM
-                  parentElement.appendChild(iconElement);
-                  
-                  // Create icon element with proper styling based on document type
-                  const docType = document.type.toLowerCase();
-                  const iconColor = 
-                    docType === "pdf" ? "text-primary" : 
-                    ["docx", "doc"].includes(docType) ? "text-blue-500" : 
-                    ["xlsx", "xls"].includes(docType) ? "text-green-500" : 
-                    ["jpg", "jpeg", "png", "webp", "gif"].includes(docType) ? "text-purple-500" : 
-                    "text-muted-foreground";
-                  
-                  // Create a simple div to show instead of React component
-                  const iconDiv = window.document.createElement('div');
-                  iconDiv.className = `h-10 w-10 ${iconColor} flex items-center justify-center`;
-                  iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
-                  
-                  iconElement.appendChild(iconDiv);
-                }
-              }}
+              onError={handleImageError}
             />
           ) : (
             <div className="flex items-center justify-center h-20 w-20">
