@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -116,7 +117,7 @@ const Documents = () => {
       name: fileData.fileName || `Document-${Date.now()}.pdf`,
       type: fileData.fileName?.split('.').pop()?.toUpperCase() || "PDF",
       size: fileData.fileSize ? `${(fileData.fileSize / 1024).toFixed(1)} KB` : "Unknown",
-      lastModified: new Date().toFullYear() + "-" + 
+      lastModified: new Date().getFullYear() + "-" + 
                     String(new Date().getMonth() + 1).padStart(2, '0') + "-" + 
                     String(new Date().getDate()).padStart(2, '0'),
     };
