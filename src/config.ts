@@ -9,9 +9,21 @@ export const config = {
   
   // Feature flags
   features: {
-    enableCloudinary: false, // Disabled in prod as specified
+    enableCloudinary: false, // Set to true when you've configured your Cloudinary keys
     enableWebAssembly: true, // For client-first light scrubs
     enableEdgeProcessing: true // For more intensive tasks
+  },
+  
+  // External services configuration
+  externalServices: {
+    cloudinary: {
+      cloudName: "", // Your Cloudinary cloud name
+      apiKey: "",    // Your Cloudinary API key
+      apiSecret: "", // Your Cloudinary API secret (use environment variables in production)
+    },
+    openai: {
+      apiKey: "",    // Your OpenAI API key (use environment variables in production)
+    }
   },
   
   // API endpoints

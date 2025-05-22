@@ -1,3 +1,4 @@
+
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider"
@@ -7,7 +8,7 @@ import Auth from "@/pages/Auth";
 import Pricing from "@/pages/Pricing";
 import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
-import Layout from "@/components/Layout";
+import Layout from "@/components/layout/Layout";
 import { Toaster } from "@/components/ui/sonner"
 
 // Update the import for ApiKeys
