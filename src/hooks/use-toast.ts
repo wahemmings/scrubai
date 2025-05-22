@@ -170,16 +170,21 @@ function toast(props: Toast) {
   }
 }
 
+// Fixed type definitions for helper functions
+interface ToastOptions extends Omit<Toast, "title" | "type"> {
+  description?: React.ReactNode;
+}
+
 // Helper functions for different toast types
-toast.success = (title: string, options: Omit<Toast, "title" | "type"> = {}) => {
+toast.success = (title: string, options: ToastOptions = {}) => {
   return toast({ title, ...options, type: "success", variant: "default" });
 };
 
-toast.error = (title: string, options: Omit<Toast, "title" | "type"> = {}) => {
+toast.error = (title: string, options: ToastOptions = {}) => {
   return toast({ title, ...options, type: "error", variant: "destructive" });
 };
 
-toast.warning = (title: string, options: Omit<Toast, "title" | "type"> = {}) => {
+toast.warning = (title: string, options: ToastOptions = {}) => {
   return toast({ title, ...options, type: "warning", variant: "default" });
 };
 
