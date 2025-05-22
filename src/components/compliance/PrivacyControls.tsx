@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,8 +21,7 @@ export const PrivacyControls = () => {
     try {
       setIsDeleting(true);
       
-      // Delete all related data from different tables
-      // Note: These operations depend on proper RLS policies and cascade delete setup
+      // Delete all related data from different tables in the correct order to avoid FK constraints
       
       // 1. Delete jobs data
       await supabase
@@ -43,13 +41,13 @@ export const PrivacyControls = () => {
         .delete()
         .eq('user_id', user.id);
       
-      // 4. Delete profile data
+      // 4. Delete profile data - IMPORTANT! Do this before deleting the user
       await supabase
         .from('profiles')
         .delete()
         .eq('id', user.id);
       
-      // 5. Finally delete the user account
+      // 5. Finally delete the user account itself
       const { error } = await supabase.auth.admin.deleteUser(user.id);
       
       if (error) throw error;
