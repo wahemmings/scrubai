@@ -39,7 +39,7 @@ export const processFile = async (
   });
   
   // For text and small documents, use WebAssembly processing (client-first approach)
-  if (type === "document" && file.size < 1 * 1024 * 1024 && config.features.enableWebAssembly) {
+  if (type === "document" && file.size < 1 * 1024 * 1024 && config.features.enableWasmProcessing) {
     // For smaller documents, we don't need to upload to Cloudinary
     decrementCredits(1);
     return { jobId, data: { fileName: file.name, fileSize: file.size } };

@@ -23,6 +23,7 @@ const config = {
     analytics: {
       posthogApiKey: import.meta.env.VITE_POSTHOG_API_KEY || "",
       posthogHost: import.meta.env.VITE_POSTHOG_HOST || "https://app.posthog.com",
+      sentryDsn: import.meta.env.VITE_SENTRY_DSN || ""
     }
   },
   
@@ -82,6 +83,7 @@ export const env = {
   // Analytics - client-side safe values only
   POSTHOG_API_KEY: import.meta.env.VITE_POSTHOG_API_KEY || "",
   POSTHOG_HOST: import.meta.env.VITE_POSTHOG_HOST || "",
+  SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN || "",
   
   // Feature flags
   ENABLE_CLOUDINARY: import.meta.env.VITE_ENABLE_CLOUDINARY === 'true' || false,
