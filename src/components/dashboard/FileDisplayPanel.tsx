@@ -14,7 +14,7 @@ interface FileDisplayPanelProps {
 
 export const FileDisplayPanel = ({ isOriginal, content }: FileDisplayPanelProps) => {
   const { currentJob } = useAppStore();
-  const title = isOriginal ? "Original" : "Scrubbed";
+  const title = isOriginal ? "Original Content" : "Scrubbed Content";
 
   // Mark preview ready when the job is completed
   useEffect(() => {
@@ -27,7 +27,7 @@ export const FileDisplayPanel = ({ isOriginal, content }: FileDisplayPanelProps)
     if (isOriginal) {
       if (content instanceof File) {
         return (
-          <p className="text-muted-foreground text-center mt-32">
+          <p className="text-muted-foreground text-center mt-12">
             [File: {content.name}]
           </p>
         );
@@ -35,7 +35,7 @@ export const FileDisplayPanel = ({ isOriginal, content }: FileDisplayPanelProps)
         return <pre className="text-sm whitespace-pre-wrap">{content}</pre>;
       } else {
         return (
-          <p className="text-muted-foreground text-center mt-32">
+          <p className="text-muted-foreground text-center mt-12">
             [Original content will display here]
           </p>
         );
@@ -60,7 +60,7 @@ export const FileDisplayPanel = ({ isOriginal, content }: FileDisplayPanelProps)
         );
       } else {
         return (
-          <p className="text-muted-foreground text-center mt-32">
+          <p className="text-muted-foreground text-center mt-12">
             [Scrubbed content will display here]
           </p>
         );
@@ -82,11 +82,11 @@ export const FileDisplayPanel = ({ isOriginal, content }: FileDisplayPanelProps)
         <div className="flex items-center gap-2">
           {currentJob && (
             <Badge 
-              variant={
-                currentJob.status === 'completed' ? 'success' : 
-                currentJob.status === 'failed' ? 'destructive' : 
-                currentJob.status === 'processing' ? 'warning' : 'secondary'
-              }
+              className={`
+                ${currentJob.status === 'completed' ? 'bg-green-100 text-green-800 hover:bg-green-100' : ''}
+                ${currentJob.status === 'failed' ? 'bg-red-100 text-red-800 hover:bg-red-100' : ''}
+                ${currentJob.status === 'processing' ? 'bg-blue-100 text-blue-800 hover:bg-blue-100' : ''}
+              `}
             >
               {currentJob.status.charAt(0).toUpperCase() + currentJob.status.slice(1)}
             </Badge>
