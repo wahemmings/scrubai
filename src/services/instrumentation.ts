@@ -9,9 +9,7 @@ export const initSentry = () => {
     dsn: config.externalServices.analytics.sentryDsn,
     integrations: [
       // Use Sentry's built-in integrations
-      Sentry.browserTracingIntegration({
-        tracePropagationTargets: ['localhost', /^https:\/\/yourserver\.io\/api/],
-      }),
+      Sentry.browserTracingIntegration(),
       Sentry.replayIntegration(),
     ],
     // Performance Monitoring

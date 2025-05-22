@@ -8,6 +8,8 @@ import Auth from "@/pages/Auth";
 import Pricing from "@/pages/Pricing";
 import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
+import TermsOfUse from "@/pages/TermsOfUse";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import Layout from "@/components/layout/Layout";
 import { Toaster } from "@/components/ui/sonner"
 import { AuthProvider } from "@/hooks/useAuth";
@@ -35,6 +37,8 @@ function App() {
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/api-keys" element={<ApiKeysPage />} />
+              <Route path="/terms" element={<TermsOfUse />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
