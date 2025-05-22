@@ -17,12 +17,12 @@ export const config = {
   // External services configuration
   externalServices: {
     cloudinary: {
-      cloudName: "", // Your Cloudinary cloud name
-      apiKey: "",    // Your Cloudinary API key
-      apiSecret: "", // Your Cloudinary API secret (use environment variables in production)
+      cloudName: "", // Add your Cloudinary cloud name here
+      apiKey: "",    // Add your Cloudinary API key here
+      apiSecret: "", // Add your Cloudinary API secret here
     },
     openai: {
-      apiKey: "",    // Your OpenAI API key (use environment variables in production)
+      apiKey: "",    // Add your OpenAI API key here
     }
   },
   
