@@ -11,13 +11,13 @@ import NotFound from "@/pages/NotFound";
 import Layout from "@/components/layout/Layout";
 import { Toaster } from "@/components/ui/sonner"
 
-// Update the import for ApiKeys
+// Import ApiKeysPage
 import ApiKeysPage from "./features/api-keys/ApiKeysPage";
 
 function App() {
   return (
     <BrowserRouter>
-      <ThemeProvider>
+      <ThemeProvider defaultTheme="system" storageKey="ui-theme">
         <Layout>
           <Routes>
             <Route path="/" element={<Landing />} />

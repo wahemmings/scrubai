@@ -9,7 +9,7 @@ export const config = {
   
   // Feature flags
   features: {
-    enableCloudinary: false, // Set to true when you've configured your Cloudinary keys
+    enableCloudinary: false, // Change this to true when you've configured your Cloudinary keys
     enableWebAssembly: true, // For client-first light scrubs
     enableEdgeProcessing: true // For more intensive tasks
   },
