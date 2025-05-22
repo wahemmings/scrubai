@@ -9,7 +9,7 @@ export const config = {
   
   // Feature flags
   features: {
-    enableCloudinary: false, // Change this to true when you've configured your Cloudinary keys
+    enableCloudinary: true, // Changed to true since Cloudinary keys are now configured
     enableWebAssembly: true, // For client-first light scrubs
     enableEdgeProcessing: true // For more intensive tasks
   },
@@ -17,12 +17,12 @@ export const config = {
   // External services configuration
   externalServices: {
     cloudinary: {
-      cloudName: "", // Add your Cloudinary cloud name here
-      apiKey: "",    // Add your Cloudinary API key here
-      apiSecret: "", // Add your Cloudinary API secret here
+      cloudName: "da7q81lrh", // Cloudinary cloud name
+      apiKey: "975886951787346", // Cloudinary API key
+      apiSecret: "XTBAs9PqAWdZ32ibhSN5h9FYMuY", // Cloudinary API secret
     },
     openai: {
-      apiKey: "",    // Add your OpenAI API key here
+      apiKey: "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", // OpenAI API key
     }
   },
   
