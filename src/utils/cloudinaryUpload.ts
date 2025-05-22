@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 // Get secure upload signature from Supabase edge function
 export const getUploadSignature = async (user: any) => {
@@ -12,13 +12,19 @@ export const getUploadSignature = async (user: any) => {
     console.log("Requesting upload signature for user:", user.id);
     
     // Check that the user has a valid session token
-    const authHeader = await supabase.auth.getSession();
-    if (!authHeader?.data?.session?.access_token) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
       throw new Error("No valid session token found");
     }
     
+    // Add detailed logging for edge function call
+    console.log("Calling generate-upload-signature edge function");
     const { data, error } = await supabase.functions.invoke('generate-upload-signature', {
-      method: 'POST'
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ user_id: user.id })
     });
     
     if (error) {

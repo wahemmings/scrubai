@@ -17,7 +17,26 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
   try {
     console.log("Testing Cloudinary connection with user:", user?.id);
     
+    if (!user) {
+      toast.error("Authentication required", {
+        description: "You must be logged in to test Cloudinary connection."
+      });
+      return false;
+    }
+    
+    // Get current auth session to verify token
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log("Auth session available:", !!session);
+    
+    if (!session) {
+      toast.error("No active session found", {
+        description: "Please log out and log in again to refresh your session."
+      });
+      return false;
+    }
+    
     // Attempt to get upload signature from edge function
+    console.log("Requesting upload signature from edge function...");
     const signatureData = await getUploadSignature(user);
     
     if (!signatureData || !signatureData.signature) {
@@ -26,7 +45,7 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
       return false;
     }
     
-    console.log("Cloudinary signature successfully obtained");
+    console.log("Cloudinary signature successfully obtained:", signatureData);
     toast.success("Cloudinary connection successful", {
       description: "Your Cloudinary integration is working correctly."
     });
@@ -35,13 +54,25 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
     console.error("Error testing Cloudinary connection:", error);
     
     // Enhanced error handling with specific messages
-    if (error instanceof Error && error.message.includes("Failed to send a request to the Edge Function")) {
-      toast.error("Edge Function connection failed", {
-        description: "Make sure your Supabase Edge Function is deployed correctly."
-      });
+    if (error instanceof Error) {
+      const errorMsg = error.message;
+      
+      if (errorMsg.includes("Failed to send a request to the Edge Function")) {
+        toast.error("Edge Function connection failed", {
+          description: "Make sure your Supabase Edge Function is deployed correctly and your session is valid."
+        });
+      } else if (errorMsg.includes("Unauthorized") || errorMsg.includes("JWT")) {
+        toast.error("Authentication error", {
+          description: "Your session may have expired. Please log out and log in again."
+        });
+      } else {
+        toast.error("Cloudinary connection failed", {
+          description: errorMsg
+        });
+      }
     } else {
       toast.error("Cloudinary connection failed", {
-        description: error instanceof Error ? error.message : "Unknown error"
+        description: "Unknown error"
       });
     }
     return false;
@@ -85,13 +116,25 @@ export const uploadTestFile = async (user: any): Promise<void> => {
     console.error("Error uploading test file:", error);
     
     // Enhanced error handling with specific messages
-    if (error instanceof Error && error.message.includes("Failed to send a request to the Edge Function")) {
-      toast.error("Edge Function connection failed", {
-        description: "Make sure your Supabase Edge Function is deployed correctly and secrets are configured."
-      });
+    if (error instanceof Error) {
+      const errorMsg = error.message;
+      
+      if (errorMsg.includes("Failed to send a request to the Edge Function")) {
+        toast.error("Edge Function connection failed", {
+          description: "Make sure your Supabase Edge Function is deployed correctly and secrets are configured."
+        });
+      } else if (errorMsg.includes("Unauthorized") || errorMsg.includes("JWT")) {
+        toast.error("Authentication error", {
+          description: "Your session may have expired. Please log out and log in again."
+        });
+      } else {
+        toast.error("Test upload failed", {
+          description: errorMsg
+        });
+      }
     } else {
       toast.error("Test upload failed", {
-        description: error instanceof Error ? error.message : "Unknown error"
+        description: "Unknown error"
       });
     }
   }
