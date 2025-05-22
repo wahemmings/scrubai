@@ -1,4 +1,3 @@
-
 import * as React from "react"
 
 import type {
@@ -139,6 +138,7 @@ function dispatch(action: Action) {
   })
 }
 
+// Define the base Toast type
 type Toast = Omit<ToasterToast, "id">
 
 function toast(props: Toast) {
@@ -175,7 +175,6 @@ interface ToastOptions {
   description?: React.ReactNode;
   variant?: "default" | "destructive";
   action?: ToastActionElement;
-  // Add any other properties from Toast except 'title' and 'type'
   duration?: number;
   className?: string;
   onOpenChange?: (open: boolean) => void;
@@ -183,7 +182,7 @@ interface ToastOptions {
 
 // Helper functions with fixed typings
 toast.success = (title: string, options: ToastOptions = {}) => {
-  return toast({ title, type: "success", variant: "default", ...options });
+  return toast({ title, type: "success", ...options });
 };
 
 toast.error = (title: string, options: ToastOptions = {}) => {
@@ -191,7 +190,7 @@ toast.error = (title: string, options: ToastOptions = {}) => {
 };
 
 toast.warning = (title: string, options: ToastOptions = {}) => {
-  return toast({ title, type: "warning", variant: "default", ...options });
+  return toast({ title, type: "warning", ...options });
 };
 
 function useToast() {
