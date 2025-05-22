@@ -59,18 +59,17 @@ const CloudinaryDocumentCard: React.FC<CloudinaryDocumentCardProps> = ({
     // Fallback to icon if image fails to load
     e.currentTarget.style.display = 'none';
     
-    // Create a container for the icon
-    const iconElement = document.createElement('div');
-    iconElement.className = 'flex items-center justify-center h-20 w-20';
-    
-    // Append to parent element
+    // Get the parent element where we'll add the icon
     const parentElement = e.currentTarget.parentElement;
     if (parentElement) {
-      // Add the container to the DOM
-      parentElement.appendChild(iconElement);
+      // Create a container for the icon and add appropriate styling
+      const iconContainer = document.createElement('div');
+      iconContainer.className = 'flex items-center justify-center h-20 w-20';
       
-      // Create icon element with proper styling based on document type
+      // Add icon SVG based on document type
       const docType = document.type.toLowerCase();
+      const iconSvg = document.createElement('div');
+      
       const iconColor = 
         docType === "pdf" ? "text-primary" : 
         ["docx", "doc"].includes(docType) ? "text-blue-500" : 
@@ -78,12 +77,11 @@ const CloudinaryDocumentCard: React.FC<CloudinaryDocumentCardProps> = ({
         ["jpg", "jpeg", "png", "webp", "gif"].includes(docType) ? "text-purple-500" : 
         "text-muted-foreground";
       
-      // Create a simple div to show instead of React component
-      const iconDiv = document.createElement('div');
-      iconDiv.className = `h-10 w-10 ${iconColor} flex items-center justify-center`;
-      iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
+      iconSvg.className = `h-10 w-10 ${iconColor} flex items-center justify-center`;
+      iconSvg.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
       
-      iconElement.appendChild(iconDiv);
+      iconContainer.appendChild(iconSvg);
+      parentElement.appendChild(iconContainer);
     }
   };
 

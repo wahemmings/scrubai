@@ -54,12 +54,31 @@ Deno.serve(async (req) => {
       );
     }
     
+    // Get Cloudinary credentials from environment variables
+    const cloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME');
+    const apiKey = Deno.env.get('CLOUDINARY_API_KEY');
+    const apiSecret = Deno.env.get('CLOUDINARY_API_SECRET');
+    const uploadPreset = Deno.env.get('CLOUDINARY_UPLOAD_PRESET') || 'scrubai_secure';
+    
+    // Validate required Cloudinary credentials
+    if (!cloudName || !apiKey || !apiSecret) {
+      console.error('Missing Cloudinary credentials:', { 
+        hasCloudName: !!cloudName, 
+        hasApiKey: !!apiKey, 
+        hasApiSecret: !!apiSecret 
+      });
+      
+      return new Response(
+        JSON.stringify({ error: 'Cloudinary configuration not found' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     // Generate parameters for Cloudinary upload
     const timestamp = Math.floor(Date.now() / 1000);
     const userId = user.id;
     const publicId = `${userId}/${uuid()}`;
     const folder = `scrubai/${userId}`;
-    const uploadPreset = 'scrubai_secure';
     
     // Parameters to sign
     const paramsToSign = {
@@ -68,15 +87,6 @@ Deno.serve(async (req) => {
       upload_preset: uploadPreset,
       public_id: publicId,
     };
-    
-    // Get Cloudinary API secret from environment variables
-    const apiSecret = Deno.env.get('CLOUDINARY_API_SECRET') ?? '';
-    if (!apiSecret) {
-      return new Response(
-        JSON.stringify({ error: 'Server configuration error' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
     
     // Generate signature
     const signature = generateSignature(paramsToSign, apiSecret);
@@ -89,7 +99,8 @@ Deno.serve(async (req) => {
         folder,
         publicId,
         uploadPreset,
-        cloudName: Deno.env.get('CLOUDINARY_CLOUD_NAME'),
+        cloudName,
+        apiKey,
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
       }),
       { 
@@ -103,7 +114,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Error generating upload signature:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal Server Error' }),
+      JSON.stringify({ error: 'Internal Server Error', message: error instanceof Error ? error.message : String(error) }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

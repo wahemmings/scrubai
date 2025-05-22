@@ -14,26 +14,20 @@ export const getUploadSignature = async (user: any) => {
     });
     
     if (error) throw error;
+    if (!data) throw new Error("No signature data returned from edge function");
+    
+    console.log("Upload signature received:", data);
     return data;
   } catch (error) {
     console.error("Edge function error:", error);
-    throw new Error("Failed to get upload signature. Edge function may be unavailable.");
+    throw new Error(`Failed to get upload signature: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
 
 // Secure file upload to Cloudinary
 export const secureUploadToCloudinary = async (file: File, signatureData: any) => {
-  if (signatureData.signature === "mock_signature_for_testing") {
-    console.log("Using mock signature - in production this would fail");
-    // Return mock response for testing
-    return {
-      public_id: `mock_${Date.now()}`,
-      secure_url: "https://demo-res.cloudinary.com/mock-image.jpg",
-      format: file.type.split('/').pop(),
-      width: 800,
-      height: 600,
-      bytes: file.size
-    };
+  if (!signatureData || !signatureData.signature) {
+    throw new Error("Invalid signature data");
   }
   
   const formData = new FormData();
@@ -46,6 +40,18 @@ export const secureUploadToCloudinary = async (file: File, signatureData: any) =
   formData.append('upload_preset', signatureData.uploadPreset);
   
   const cloudName = signatureData.cloudName;
+  
+  if (!cloudName) {
+    throw new Error("Cloud name is missing in signature data");
+  }
+  
+  console.log("Uploading to Cloudinary with params:", {
+    cloudName,
+    folder: signatureData.folder,
+    preset: signatureData.uploadPreset,
+    publicId: signatureData.publicId
+  });
+  
   const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
     method: 'POST',
     body: formData,
@@ -53,59 +59,29 @@ export const secureUploadToCloudinary = async (file: File, signatureData: any) =
   
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(`Upload failed: ${errorData.error?.message || 'Unknown error'}`);
+    throw new Error(`Upload failed: ${errorData.error?.message || response.statusText}`);
   }
   
-  return await response.json();
+  const result = await response.json();
+  console.log("Cloudinary upload successful:", result);
+  return result;
 };
 
 // Upload file to server with secure Cloudinary process
 export const uploadToServer = async (file: File, jobId: string, user: any) => {
   toast({
-    title: "Processing larger file",
+    title: "Processing file",
     description: "Your file is being processed on our secure servers."
   });
   
   try {
-    // Get secure upload signature
-    let signatureData;
-    try {
-      signatureData = await getUploadSignature(user);
-    } catch (error) {
-      console.error("Edge function error:", error);
-      toast({
-        title: "Edge function unavailable",
-        description: "Using development mode. In production, uploads will be secured via edge functions.",
-        // Fix the TypeScript error here - "warning" is not a valid variant type
-        variant: "default" // Changed from "warning" to "default"
-      });
-      
-      // Create mock signature data for development
-      const timestamp = Math.floor(Date.now() / 1000);
-      signatureData = {
-        apiKey: "mock_api_key",
-        signature: "mock_signature_for_testing",
-        timestamp,
-        folder: "scrubai_dev",
-        publicId: `dev_${Date.now()}`,
-        uploadPreset: "scrubai_secure",
-        cloudName: "demo",
-        expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutes
-      };
-    }
+    console.log("Starting secure upload process for job:", jobId);
     
-    // Log information about the upload for debugging
-    console.log("Attempting to upload to Cloudinary with:", { 
-      fileName: file.name, 
-      fileSize: file.size,
-      uploadPreset: signatureData.uploadPreset,
-      folder: signatureData.folder,
-      cloudName: signatureData.cloudName
-    });
+    // Get secure upload signature
+    const signatureData = await getUploadSignature(user);
     
     // Upload to Cloudinary securely
     const uploadResult = await secureUploadToCloudinary(file, signatureData);
-    console.log("Cloudinary upload result:", uploadResult);
     
     // Update the job in the database
     const { error: jobError } = await supabase
