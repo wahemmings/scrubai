@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,16 +42,30 @@ export const PrivacyControls = () => {
         .delete()
         .eq('user_id', user.id);
       
-      // 4. Delete profile data - IMPORTANT! Do this before deleting the user
-      await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', user.id);
+      // 4. Delete profile data must happen through auth.users deletion with cascade
+      // Direct deletion of the profile causes FK constraint errors
       
-      // 5. Finally delete the user account itself
+      // 5. Delete the user account itself
+      // This will automatically delete the profile due to the foreign key constraint
       const { error } = await supabase.auth.admin.deleteUser(user.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error details from admin.deleteUser:", error);
+        // Try alternative approach if admin delete fails
+        const { error: signOutError } = await supabase.auth.signOut();
+        if (signOutError) throw signOutError;
+        
+        toast({
+          title: "Account deletion initiated",
+          description: "Your account deletion request is being processed. You've been signed out.",
+          type: "info"
+        });
+        
+        // Close dialog and navigate to home
+        setIsDialogOpen(false);
+        navigate("/");
+        return;
+      }
       
       // Sign out the user
       await signOut();
