@@ -59,6 +59,12 @@ export function DashboardSidebar() {
       path: "/profile", 
       icon: Settings,
       active: isActive("/profile")
+    },
+    { 
+      name: "Support", 
+      path: "/support", 
+      icon: HelpCircle,
+      active: isActive("/support")
     }
   ];
   
