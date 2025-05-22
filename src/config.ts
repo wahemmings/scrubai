@@ -1,3 +1,4 @@
+
 // Application configuration
 const config = {
   // Supabase configuration 
@@ -18,7 +19,7 @@ const config = {
   // External services configuration
   externalServices: {
     cloudinary: {
-      cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "your-cloud-name-here",
+      cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "da7q81lrh",
     },
     analytics: {
       posthogApiKey: import.meta.env.VITE_POSTHOG_API_KEY || "",
@@ -78,7 +79,7 @@ export const env = {
   SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5c2V6cnRxZWhwem9uZmxrZXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NTk0NTIsImV4cCI6MjA2MzQzNTQ1Mn0.iuoDyOtcRhK3CpN1Sf48WGP8Y1YPuSm0SYQ250e1xJE",
   
   // Cloudinary - client-side safe values only
-  CLOUDINARY_CLOUD_NAME: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "your-cloud-name-here",
+  CLOUDINARY_CLOUD_NAME: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "da7q81lrh",
   
   // Analytics - client-side safe values only
   POSTHOG_API_KEY: import.meta.env.VITE_POSTHOG_API_KEY || "",
