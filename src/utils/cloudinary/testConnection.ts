@@ -1,88 +1,73 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { testEdgeFunctionClient, testEdgeFunctionDirect, testCloudinaryConfig } from "../diagnostics";
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { testEdgeFunctionClient, testEdgeFunctionDirect, testCloudinaryConfig } from '@/integrations/cloudinary/diagnostics';
 
-// Test the direct connection to the edge function
-export const testCloudinaryEdgeFunction = async (user: any) => {
-  if (!user) {
-    toast.error("Authentication required", {
-      description: "You need to be logged in to test Cloudinary connection"
-    });
-    return;
-  }
-
-  toast.info("Testing edge function connection...");
-  
-  try {
-    // Test both methods of connecting to the edge function
-    const clientTest = await testEdgeFunctionClient(user);
-    
-    if (clientTest.success) {
-      toast.success("Edge function connection successful via Supabase client", {
-        description: `Successfully connected to the edge function and received valid response with signature.`
-      });
-      return clientTest;
-    }
-    
-    // If client method fails, try direct method
-    const directTest = await testEdgeFunctionDirect(user);
-    
-    if (directTest.success) {
-      toast.success("Edge function connection successful via direct API call", {
-        description: `Successfully connected to the edge function directly.`
-      });
-      return directTest;
-    }
-    
-    // Both methods failed
-    toast.error("Edge function connection failed", {
-      description: "Could not connect to the edge function using either method. Check browser console for details."
-    });
-    
-    console.error("Edge function client test failed:", clientTest.error || clientTest.message);
-    console.error("Edge function direct test failed:", directTest.error || directTest.message);
-    
-    return directTest;
-  } catch (error) {
-    toast.error("Edge function test error", {
-      description: error instanceof Error ? error.message : "Unknown error"
-    });
-    console.error("Edge function test error:", error);
-    return {
-      success: false,
-      message: "Exception when testing edge function",
-      error
-    };
-  }
-};
-
-// Test the Cloudinary connection by checking configuration
+// Test the connection to Cloudinary through Supabase edge function
 export const testCloudinaryConnection = async (user: any) => {
-  toast.info("Testing Cloudinary connection...");
-  
-  // First, check if Cloudinary is properly configured
-  const configTest = testCloudinaryConfig();
-  
-  if (!configTest.success) {
-    toast.error("Cloudinary configuration error", {
-      description: configTest.message
+  if (!user) {
+    toast.error('Authentication required', {
+      description: 'You must be logged in to test the Cloudinary connection'
     });
-    console.error("Cloudinary configuration error:", configTest);
-    return configTest;
+    return null;
   }
   
-  // Next, test edge function connection
-  const edgeFunctionResult = await testCloudinaryEdgeFunction(user);
-  
-  if (!edgeFunctionResult.success) {
-    // Error message already shown by testCloudinaryEdgeFunction
-    return edgeFunctionResult;
-  }
-  
-  toast.success("Cloudinary connection successful", {
-    description: "Your application is properly configured to use Cloudinary"
+  toast('Testing Cloudinary connection...', {
+    description: 'Checking configuration and connectivity'
   });
   
-  return edgeFunctionResult;
+  try {
+    // First test using the Supabase client
+    const clientResult = await testEdgeFunctionClient(user);
+    
+    if (clientResult.success) {
+      toast.success('Cloudinary connection successful', {
+        description: 'Edge function test passed'
+      });
+      console.log('Edge function test result:', clientResult);
+      return clientResult;
+    } else {
+      console.log('Client test failed, trying direct fetch...');
+      
+      // Fall back to direct fetch if client fails
+      const directResult = await testEdgeFunctionDirect(user);
+      
+      if (directResult.success) {
+        toast.success('Cloudinary connection successful', {
+          description: 'Direct edge function test passed'
+        });
+        console.log('Direct edge function test result:', directResult);
+        return directResult;
+      } else {
+        // If both tests fail, check configuration
+        const configResult = await testCloudinaryConfig();
+        
+        if (!configResult.success) {
+          toast.error('Cloudinary configuration error', {
+            description: 'Your Cloudinary configuration is incomplete'
+          });
+        } else {
+          toast.error('Cloudinary connection failed', {
+            description: 'Unable to connect to Cloudinary through edge function'
+          });
+        }
+        
+        console.error('Edge function tests failed:', {
+          clientError: clientResult.error,
+          directError: directResult.error,
+          configResult
+        });
+        return { success: false, clientError: clientResult.error, directError: directResult.error };
+      }
+    }
+  } catch (error) {
+    console.error('Cloudinary test failed:', error);
+    toast.error('Connection test failed', {
+      description: error instanceof Error ? error.message : 'Unknown error'
+    });
+    return { success: false, error };
+  }
 };
+
+// Export for backward compatibility
+export default testCloudinaryConnection;

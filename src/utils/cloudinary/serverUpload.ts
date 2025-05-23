@@ -1,7 +1,7 @@
 
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getUploadSignature, secureUploadToCloudinary } from "./uploadService";
+import { getUploadSignature } from "./uploadSignature";
+import { secureUploadToCloudinary } from "./fileUpload";
 
 // Upload file to server with secure Cloudinary process
 export const uploadToServer = async (file: File, jobId: string, user: any) => {
@@ -10,43 +10,33 @@ export const uploadToServer = async (file: File, jobId: string, user: any) => {
   });
   
   try {
-    console.log("Starting secure upload process for job:", jobId);
-    
-    // Get secure upload signature
+    // Get upload signature from edge function
+    console.log(`Getting upload signature for job ${jobId}`);
     const signatureData = await getUploadSignature(user);
     
-    // Upload to Cloudinary securely
+    // Set the public ID for the file based on the job ID
+    signatureData.publicId = `${signatureData.folder}/${jobId}`;
+    
+    // Upload the file to Cloudinary
+    console.log(`Uploading file for job ${jobId} to Cloudinary`);
     const uploadResult = await secureUploadToCloudinary(file, signatureData);
     
-    // Update the job in the database
-    const { error: jobError } = await supabase
-      .from('jobs')
-      .update({
-        original_content_path: uploadResult.public_id,
-        file_name: file.name,
-        file_size: file.size
-      })
-      .eq('id', jobId);
+    console.log("Upload complete:", uploadResult);
     
-    if (jobError) {
-      throw new Error(`Failed to update job: ${jobError.message}`);
-    }
-    
-    toast.success("File uploaded successfully", {
-      description: "Your file has been uploaded to our secure cloud storage."
-    });
-    
+    // Return the result data needed by the client
     return {
-      fileName: file.name,
-      fileSize: file.size,
-      contentPath: uploadResult.public_id,
+      publicId: uploadResult.public_id,
       url: uploadResult.secure_url,
-      expiresAt: signatureData.expiresAt
+      contentType: uploadResult.resource_type,
+      format: uploadResult.format,
+      bytes: uploadResult.bytes,
+      folder: signatureData.folder,
+      jobId
     };
   } catch (error) {
-    console.error("Upload error:", error);
-    toast.error("Upload failed", {
-      description: error instanceof Error ? error.message : "Unknown error"
+    console.error("Upload to server failed:", error);
+    toast.error("Upload failed", { 
+      description: error instanceof Error ? error.message : "Unknown error occurred"
     });
     throw error;
   }
