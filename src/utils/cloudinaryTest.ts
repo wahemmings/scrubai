@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { getUploadSignature, secureUploadToCloudinary } from "@/utils/cloudinaryUpload";
 import { isCloudinaryEnabled, getCloudinaryConfig } from "@/integrations/cloudinary/config";
@@ -79,7 +78,7 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
     });
     
     toast.success("Cloudinary connection successful", {
-      description: `Connected to cloud: ${signatureData.cloudName}, preset: ${signatureData.uploadPreset || 'scrubai_secure'}`
+      description: "Connected to cloud: ${signatureData.cloudName}, preset: ${signatureData.uploadPreset || 'scrubai_secure'}"
     });
     return true;
   } catch (error) {
@@ -130,62 +129,45 @@ export const uploadTestFile = async (user: any): Promise<void> => {
     const testBlob = new Blob(['Test file content for Cloudinary integration'], { type: 'text/plain' });
     const testFile = new File([testBlob], 'cloudinary-test.txt', { type: 'text/plain' });
     
-    // Get upload signature
-    toast("Requesting upload signature...");
-    const signatureData = await getUploadSignature(user);
+    // Create a test ID first
+    const testId = "test_" + Math.random().toString(36).substring(2, 10);
     
-    // Add a test-specific public_id - IMPORTANT: 
-    // Setting this AFTER getting the signature is a problem
-    // since it wasn't included when the signature was generated
-    const testId = `test_${Math.random().toString(36).substring(2, 10)}`;
+    // Get initial signature just for the folder
+    console.log("Requesting initial upload signature to get user folder...");
+    const initialSignature = await getUploadSignature(user);
+    
+    // Generate the complete public_id with the user folder
+    const testPublicId = "${initialSignature.folder}/test/${testId}";
+    console.log("Generated test public_id:", testPublicId);
+    
+    // Now get a new signature that includes this public_id
+    toast("Requesting upload signature with public_id...");
+    console.log("Requesting signature with public_id:", testPublicId);
+    
+    // This gets a signature that includes the public_id in the signature calculation
+    const signatureData = await getUploadSignature(user, {
+      public_id: testPublicId
+    });
     
     // Log the signature data for debugging
     console.log("Upload signature received for test:", {
-      cloudName: signatureData.cloudName,
-      hasApiKey: !!signatureData.apiKey,
+      cloudName: signatureData.cloudName || signatureData.cloudName,
+      hasApiKey: !!(signatureData.api_key || signatureData.apiKey),
       folder: signatureData.folder,
-      uploadPreset: signatureData.uploadPreset || 'default'
+      uploadPreset: signatureData.upload_preset || signatureData.uploadPreset || 'default',
+      public_id: signatureData.public_id || signatureData.publicId,
+      hasSignature: !!signatureData.signature
     });
     
     // Start upload
     toast("Uploading test file to Cloudinary...");
     
-    // IMPORTANT: Don't create separate publicId variables - use EXACT SAME string in both places
-    // The string comparison in Cloudinary is exact, so even tiny differences will cause signature failure
-    const testId = `test_${Math.random().toString(36).substring(2, 10)}`;
-    const exactPublicId = `scrubai/${user.id}/test/${testId}`;
-    
-    // CRITICAL: Make a completely new request with the exact public_id that will be used in upload
-    console.log(`Requesting signature with explicit public_id: ${exactPublicId}`);
-    const uploadParams = await getUploadSignature(user, {
-      public_id: exactPublicId
-    });
-    
-    // Make sure the exact same string is used as publicId for upload
-    uploadParams.publicId = exactPublicId;
-    
-    // Log the exact parameters that will be used for upload
-    console.log("Final upload parameters:", {
-      publicId: uploadParams.publicId,
-      folder: uploadParams.folder,
-      uploadPreset: uploadParams.uploadPreset,
-      timestamp: uploadParams.timestamp,
-      signatureLength: uploadParams.signature?.length || 0
-    });
-    
-    console.log("Using upload parameters:", {
-      publicId: uploadParams.publicId,
-      folder: uploadParams.folder,
-      uploadPreset: uploadParams.uploadPreset,
-      hasSignature: !!uploadParams.signature
-    });
-    
-    // Upload to Cloudinary with the correctly signed parameters
-    const result = await secureUploadToCloudinary(testFile, uploadParams);
+    // Upload to Cloudinary with correctly signed parameters
+    const result = await secureUploadToCloudinary(testFile, signatureData);
     
     if (result && result.public_id) {
       toast.success("Test file uploaded successfully", {
-        description: `File ID: ${result.public_id}`
+        description: "File ID: ${result.public_id}"
       });
       
       console.log("Test upload complete:", {
