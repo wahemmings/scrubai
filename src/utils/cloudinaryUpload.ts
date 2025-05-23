@@ -24,7 +24,8 @@ export const getUploadSignature = async (user: any) => {
     console.log("Request details:", {
       method: 'POST',
       user_id: user.id,
-      has_access_token: !!session?.access_token?.substring(0, 10) + '...'
+      has_access_token: !!session?.access_token?.substring(0, 10) + '...',
+      access_token_length: session?.access_token ? session.access_token.length : 0
     });
     
     // Improved error handling with explicit options

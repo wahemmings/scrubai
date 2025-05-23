@@ -74,6 +74,9 @@ redirect_uri = ""
 url = ""
 
 [functions]
+[functions.generate-upload-signature]
+verify_jwt = true
+
 [functions.handle-subscription-webhook]
 verify_jwt = false
 

@@ -55,7 +55,9 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       console.log("Auth check before edge function call:", {
         hasAuthUser: !!authUser,
-        userId: authUser?.id
+        userId: authUser?.id,
+        sessionTokenAvailable: !!session?.access_token,
+        tokenLength: session?.access_token ? session.access_token.length : 0
       });
     } catch (authError) {
       console.error("Auth check failed:", authError);
