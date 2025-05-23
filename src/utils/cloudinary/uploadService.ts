@@ -1,0 +1,188 @@
+
+import { supabase } from "@/integrations/supabase/client";
+import config from "@/config";
+
+// Get secure upload signature from Supabase edge function
+export const getUploadSignature = async (user: any) => {
+  if (!user) {
+    throw new Error("Authentication required");
+  }
+  
+  try {
+    console.log("Requesting upload signature for user:", user.id);
+    
+    // Check that the user has a valid session token
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error("No valid session token found");
+    }
+    
+    // Add detailed logging for edge function call
+    console.log("Calling generate-upload-signature edge function");
+    
+    // More detailed request logging
+    console.log("Request details:", {
+      method: 'POST',
+      user_id: user.id,
+      has_access_token: !!session?.access_token?.substring(0, 10) + '...',
+      access_token_length: session?.access_token ? session.access_token.length : 0
+    });
+    
+    let response;
+    let data;
+    let error;
+    
+    try {
+      // Try using the Supabase client first
+      console.log("Using supabase.functions.invoke method");
+      const result = await supabase.functions.invoke('generate-upload-signature', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ 
+          user_id: user.id,
+          timestamp: Math.floor(Date.now() / 1000) // Add timestamp to request
+        })
+      });
+      
+      data = result.data;
+      error = result.error;
+    } catch (invokeError) {
+      console.warn("Error using supabase.functions.invoke:", invokeError);
+      console.log("Falling back to direct fetch method");
+      
+      // If the client method fails, try direct fetch as backup
+      const supabaseFunctionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL || 
+                                  `${config.supabase.url}/functions/v1`;
+      
+      const directUrl = `${supabaseFunctionsUrl}/generate-upload-signature`;
+      
+      console.log("Calling edge function directly at:", directUrl);
+      
+      // Make direct fetch request to the edge function
+      response = await fetch(directUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ 
+          user_id: user.id,
+          timestamp: Math.floor(Date.now() / 1000)
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Direct fetch error:", errorText);
+        throw new Error(`Edge function direct fetch failed: ${response.status} ${response.statusText}`);
+      }
+      
+      data = await response.json();
+    }
+    
+    console.log("Edge function response received", { 
+      hasData: !!data, 
+      hasError: !!error,
+      errorDetails: error ? JSON.stringify(error) : null
+    });
+    
+    if (error) {
+      console.error("Edge function error:", error);
+      throw new Error(`Edge function error: ${error.message || JSON.stringify(error)}`);
+    }
+    
+    if (!data) {
+      console.error("No signature data returned from edge function");
+      throw new Error("No signature data returned from edge function");
+    }
+    
+    // Check if the response contains the expected fields
+    if (!data.signature || !data.cloudName || !data.apiKey) {
+      console.error("Invalid signature data structure:", data);
+      throw new Error("Invalid signature data structure returned from edge function");
+    }
+    
+    console.log("Upload signature received successfully:", {
+      cloudName: data.cloudName,
+      folder: data.folder,
+      uploadPreset: data.uploadPreset || 'scrubai_secure',
+      timestamp: data.timestamp
+    });
+    return data;
+  } catch (error) {
+    console.error("Edge function request error:", error);
+    throw new Error(`Failed to get upload signature: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+// Secure file upload to Cloudinary
+export const secureUploadToCloudinary = async (file: File, signatureData: any) => {
+  if (!signatureData || !signatureData.signature) {
+    throw new Error("Invalid signature data");
+  }
+  
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('api_key', signatureData.apiKey);
+  formData.append('timestamp', signatureData.timestamp.toString());
+  formData.append('signature', signatureData.signature);
+  formData.append('folder', signatureData.folder);
+  
+  // These fields are only added if they exist in the signature data
+  if (signatureData.publicId) {
+    formData.append('public_id', signatureData.publicId);
+  }
+  
+  if (signatureData.uploadPreset) {
+    formData.append('upload_preset', signatureData.uploadPreset);
+  }
+  
+  const cloudName = signatureData.cloudName;
+  
+  if (!cloudName) {
+    throw new Error("Cloud name is missing in signature data");
+  }
+  
+  console.log("Uploading to Cloudinary with params:", {
+    cloudName,
+    folder: signatureData.folder,
+    preset: signatureData.uploadPreset || 'scrubai_secure',
+    publicId: signatureData.publicId || 'auto-generated'
+  });
+  
+  try {
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+    console.log("Uploading to Cloudinary URL:", uploadUrl);
+    
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        errorData = { message: await response.text() };
+      }
+      
+      console.error("Cloudinary upload failed:", errorData);
+      throw new Error(`Upload failed: ${errorData.error?.message || response.statusText}`);
+    }
+    
+    const result = await response.json();
+    console.log("Cloudinary upload successful:", {
+      publicId: result.public_id,
+      url: result.secure_url,
+      format: result.format
+    });
+    return result;
+  } catch (error) {
+    console.error("Cloudinary upload error:", error);
+    throw error;
+  }
+};
