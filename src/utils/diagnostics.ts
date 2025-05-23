@@ -18,7 +18,7 @@ export const testEdgeFunctionClient = async (user: any) => {
     // Call the edge function using the Supabase client
     const { data, error } = await supabase.functions.invoke('generate-upload-signature', {
       method: 'POST',
-      body: { user_id: user.id, _dummy_query: "test" as any } // Fix type error by casting
+      body: { user_id: user.id, _dummy_query: "test" }
     });
     
     if (error) {
@@ -125,5 +125,79 @@ export const testCloudinaryConfig = () => {
       cloudName,
       uploadPreset
     }
+  };
+};
+
+// Run all diagnostics for Cloudinary integration
+export const runFullDiagnostics = async (user: any) => {
+  // Test Supabase connection
+  const supabaseTest = {
+    success: !!supabase,
+    message: supabase ? "Supabase client initialized successfully" : "Supabase client failed to initialize",
+    details: {
+      url: config.supabase.url ? "configured" : "missing",
+      anonKey: config.supabase.anonKey ? "configured" : "missing"
+    }
+  };
+
+  // Test Cloudinary configuration
+  const cloudinaryConfigTest = testCloudinaryConfig();
+  
+  // Test Edge Function via Supabase client
+  const edgeFunctionClientTest = await testEdgeFunctionClient(user);
+  
+  // Test Edge Function via direct fetch
+  const edgeFunctionDirectTest = await testEdgeFunctionDirect(user);
+  
+  // Test direct upload to Cloudinary
+  const testFile = new File(["test"], "test.txt", { type: "text/plain" });
+  let cloudinaryDirectUploadTest = {
+    success: false,
+    message: "Cloudinary direct upload not tested",
+    error: "Test skipped"
+  };
+  
+  // Only test direct upload if edge function test was successful
+  if (edgeFunctionClientTest.success || edgeFunctionDirectTest.success) {
+    try {
+      const signatureData = edgeFunctionClientTest.success 
+                          ? edgeFunctionClientTest.data 
+                          : edgeFunctionDirectTest.data;
+      
+      if (signatureData && signatureData.signature) {
+        // Create a dummy FormData object to test the upload process
+        const formData = new FormData();
+        formData.append('file', testFile);
+        formData.append('api_key', signatureData.apiKey);
+        formData.append('timestamp', signatureData.timestamp.toString());
+        formData.append('signature', signatureData.signature);
+        
+        // Don't actually perform the upload, just verify that we could
+        cloudinaryDirectUploadTest = {
+          success: true,
+          message: "Cloudinary direct upload preparation successful",
+          details: {
+            apiKeyProvided: !!signatureData.apiKey,
+            signatureProvided: !!signatureData.signature,
+            cloudName: signatureData.cloudName
+          }
+        };
+      }
+    } catch (error) {
+      cloudinaryDirectUploadTest = {
+        success: false,
+        message: "Cloudinary direct upload test failed",
+        error
+      };
+    }
+  }
+  
+  // Return all test results
+  return {
+    supabase: supabaseTest,
+    cloudinaryConfig: cloudinaryConfigTest,
+    edgeFunctionClient: edgeFunctionClientTest,
+    edgeFunctionDirect: edgeFunctionDirectTest,
+    cloudinaryDirectUpload: cloudinaryDirectUploadTest
   };
 };
