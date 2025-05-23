@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import config from "@/config";
 
@@ -151,7 +150,16 @@ export const runFullDiagnostics = async (user: any) => {
   
   // Test direct upload to Cloudinary
   const testFile = new File(["test"], "test.txt", { type: "text/plain" });
-  let cloudinaryDirectUploadTest = {
+  let cloudinaryDirectUploadTest: {
+    success: boolean;
+    message: string;
+    error?: any;
+    details?: {
+      apiKeyProvided?: boolean;
+      signatureProvided?: boolean;
+      cloudName?: string;
+    };
+  } = {
     success: false,
     message: "Cloudinary direct upload not tested",
     error: "Test skipped"
