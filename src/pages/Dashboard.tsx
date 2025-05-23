@@ -9,25 +9,13 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
 import { JobsTable } from "@/components/dashboard/JobsTable";
-import FileUploader from "@/components/dashboard/FileUploader";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { PlusIcon, FilterIcon } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
+import { DocumentSearchToolbar } from "@/components/dashboard/DocumentSearchToolbar";
+import { UploaderDialog } from "@/components/dashboard/UploaderDialog";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogClose
-} from "@/components/ui/dialog";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
-  const [processingType, setProcessingType] = useState("text");
   const [showUploader, setShowUploader] = useState(false);
   const [searchParams] = useSearchParams();
   const { refreshSubscription } = useSubscription();
@@ -85,6 +73,15 @@ const Dashboard = () => {
     fetchJobs();
   }, [user, currentJob]);
   
+  const handleFileUploaded = (jobId: string, fileData: any) => {
+    toast({
+      title: "Processing complete",
+      description: "Your document has been successfully processed.",
+      variant: "default",
+    });
+    setShowUploader(false);
+  };
+  
   if (authLoading) {
     return (
       <div className="container py-8">
@@ -94,15 +91,6 @@ const Dashboard = () => {
       </div>
     );
   }
-  
-  const handleFileUploaded = (jobId: string, fileData: any) => {
-    toast({
-      title: "Processing complete",
-      description: "Your document has been successfully processed.",
-      variant: "default", // Changed from "success" to "default"
-    });
-    setShowUploader(false);
-  };
   
   return (
     <div className="flex h-screen bg-background">
@@ -116,83 +104,15 @@ const Dashboard = () => {
           </div>
           
           <div className="mt-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold">Document History</h2>
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Input 
-                    placeholder="Search files..." 
-                    className="pl-8 w-[250px]"
-                  />
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.35-4.35" />
-                  </svg>
-                </div>
-                <Button variant="outline" size="icon">
-                  <FilterIcon className="h-4 w-4" />
-                </Button>
-                <Button onClick={() => setShowUploader(true)}>
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  New Scrub
-                </Button>
-              </div>
-            </div>
-
+            <DocumentSearchToolbar onNewScrub={() => setShowUploader(true)} />
             <JobsTable jobs={jobs} isLoading={isLoadingJobs} />
           </div>
           
-          <Dialog open={showUploader} onOpenChange={setShowUploader}>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-xl font-semibold">New Document Scrub</DialogTitle>
-              </DialogHeader>
-              
-              <Tabs defaultValue="text" className="w-full" onValueChange={(value) => {
-                setProcessingType(value);
-              }}>
-                <TabsList className="mb-6">
-                  <TabsTrigger value="text">Text</TabsTrigger>
-                  <TabsTrigger value="document">Documents</TabsTrigger>
-                  <TabsTrigger value="image">Images</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="text">
-                  <FileUploader 
-                    type="text" 
-                    onFileUploaded={handleFileUploaded}
-                  />
-                </TabsContent>
-                <TabsContent value="document">
-                  <FileUploader 
-                    type="document" 
-                    onFileUploaded={handleFileUploaded}
-                  /> 
-                </TabsContent>
-                <TabsContent value="image">
-                  <FileUploader 
-                    type="image" 
-                    onFileUploaded={handleFileUploaded}
-                  />
-                </TabsContent>
-              </Tabs>
-              
-              <div className="flex justify-end mt-4">
-                <DialogClose asChild>
-                  <Button variant="outline">Cancel</Button>
-                </DialogClose>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <UploaderDialog 
+            open={showUploader} 
+            onOpenChange={setShowUploader}
+            onFileUploaded={handleFileUploaded}
+          />
         </div>
       </div>
     </div>
