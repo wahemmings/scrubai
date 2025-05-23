@@ -65,6 +65,10 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
         toast("Authentication error", {
           description: "Your session may have expired. Please log out and log in again."
         });
+      } else if (errorMsg.includes("Missing Cloudinary credentials")) {
+        toast("Cloudinary credentials missing", {
+          description: "Make sure all required Cloudinary secrets are configured in Supabase."
+        });
       } else {
         toast("Cloudinary connection failed", {
           description: errorMsg
@@ -126,6 +130,10 @@ export const uploadTestFile = async (user: any): Promise<void> => {
       } else if (errorMsg.includes("Unauthorized") || errorMsg.includes("JWT")) {
         toast("Authentication error", {
           description: "Your session may have expired. Please log out and log in again."
+        });
+      } else if (errorMsg.includes("Missing Cloudinary credentials")) {
+        toast("Cloudinary credentials missing", {
+          description: "Check that all required Cloudinary secrets are configured in Supabase."
         });
       } else {
         toast("Test upload failed", {

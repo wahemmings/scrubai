@@ -19,6 +19,7 @@ export const getUploadSignature = async (user: any) => {
     
     // Add detailed logging for edge function call
     console.log("Calling generate-upload-signature edge function");
+    
     const { data, error } = await supabase.functions.invoke('generate-upload-signature', {
       method: 'POST',
       headers: {
@@ -26,6 +27,8 @@ export const getUploadSignature = async (user: any) => {
       },
       body: JSON.stringify({ user_id: user.id })
     });
+    
+    console.log("Edge function response received", { hasData: !!data, hasError: !!error });
     
     if (error) {
       console.error("Edge function error:", error);
@@ -37,7 +40,13 @@ export const getUploadSignature = async (user: any) => {
       throw new Error("No signature data returned from edge function");
     }
     
-    console.log("Upload signature received:", data);
+    // Check if the response contains the expected fields
+    if (!data.signature || !data.cloudName || !data.apiKey) {
+      console.error("Invalid signature data structure:", data);
+      throw new Error("Invalid signature data structure returned from edge function");
+    }
+    
+    console.log("Upload signature received successfully");
     return data;
   } catch (error) {
     console.error("Edge function request error:", error);
