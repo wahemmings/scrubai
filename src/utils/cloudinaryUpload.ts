@@ -115,25 +115,27 @@ export const secureUploadToCloudinary = async (file: File, signatureData: any) =
   
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('api_key', signatureData.apiKey);
+  
+  // CRITICAL: Must use the exact parameter names that Cloudinary expects
+  // Use api_key directly if available, otherwise fall back to apiKey for backward compatibility
+  formData.append('api_key', signatureData.api_key || signatureData.apiKey);
   formData.append('timestamp', signatureData.timestamp.toString());
   formData.append('signature', signatureData.signature);
   formData.append('folder', signatureData.folder);
   
   // These fields are only added if they exist in the signature data
-  if (signatureData.publicId) {
-    formData.append('public_id', signatureData.publicId);
-    console.log("Added public_id to upload:", signatureData.publicId);
-    
-    // WARNING: If we're adding a public_id here but it wasn't included
-    // when the signature was generated, the upload will fail with an
-    // "Invalid Signature" error from Cloudinary. The signature must be
-    // generated with ALL parameters that will be sent in the upload.
+  // IMPORTANT: We try the correct parameter name first, then fall back to the legacy one
+  // for backward compatibility
+  if (signatureData.public_id || signatureData.publicId) {
+    const publicId = signatureData.public_id || signatureData.publicId;
+    formData.append('public_id', publicId);
+    console.log("Added public_id to upload:", publicId);
   }
   
-  if (signatureData.uploadPreset) {
-    formData.append('upload_preset', signatureData.uploadPreset);
-    console.log("Added upload_preset to upload:", signatureData.uploadPreset);
+  if (signatureData.upload_preset || signatureData.uploadPreset) {
+    const uploadPreset = signatureData.upload_preset || signatureData.uploadPreset;
+    formData.append('upload_preset', uploadPreset);
+    console.log("Added upload_preset to upload:", uploadPreset);
   }
   
   const cloudName = signatureData.cloudName;
