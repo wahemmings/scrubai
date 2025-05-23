@@ -6,7 +6,7 @@ import config from '@/config';
 // Initialize Sentry
 export const initSentry = () => {
   Sentry.init({
-    dsn: config.externalServices.analytics.sentryDsn,
+    dsn: config.analytics.sentry.dsn,
     integrations: [
       // Use Sentry's built-in integrations
       Sentry.browserTracingIntegration(),
@@ -26,8 +26,8 @@ export const initSentry = () => {
 
 // Initialize PostHog
 export const initPostHog = () => {
-  posthog.init(config.externalServices.analytics.posthogApiKey, {
-    api_host: config.externalServices.analytics.posthogHost,
+  posthog.init(config.analytics.posthog.apiKey, {
+    api_host: config.analytics.posthog.host,
     // Enable debug mode in development
     debug: !import.meta.env.PROD,
     // Disable autotrack in development

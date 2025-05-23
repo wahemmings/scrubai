@@ -8,12 +8,28 @@ const config = {
     functionsUrl: import.meta.env.VITE_SUPABASE_FUNCTIONS_URL || ''
   },
   
+  // API configuration
+  api: {
+    baseUrl: '/api',
+    routes: {
+      progress: '/progress',
+      upload: '/upload',
+      documents: '/documents'
+    }
+  },
+  
   // External services
   externalServices: {
     cloudinary: {
       cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || '',
       apiKey: import.meta.env.VITE_CLOUDINARY_API_KEY || '',
       uploadPreset: 'scrubai_secure'
+    },
+    // Add analytics section inside externalServices
+    analytics: {
+      sentryDsn: import.meta.env.VITE_SENTRY_DSN || '',
+      posthogApiKey: import.meta.env.VITE_POSTHOG_API_KEY || '',
+      posthogHost: import.meta.env.VITE_POSTHOG_HOST || 'https://app.posthog.com'
     }
   },
   
@@ -33,7 +49,7 @@ const config = {
     }
   },
   
-  // Analytics configuration
+  // Analytics configuration - maintaining this for backward compatibility
   analytics: {
     posthog: {
       apiKey: import.meta.env.VITE_POSTHOG_API_KEY || '',

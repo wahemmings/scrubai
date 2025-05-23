@@ -9,12 +9,12 @@ export const initAnalytics = () => {
   }
 
   // Initialize Sentry
-  if (config.externalServices.analytics.sentryDsn) {
+  if (config.analytics.sentry.dsn) {
     initSentry();
   }
   
   // Initialize PostHog
-  if (config.externalServices.analytics.posthogApiKey) {
+  if (config.analytics.posthog.apiKey) {
     initPostHog();
   }
   
