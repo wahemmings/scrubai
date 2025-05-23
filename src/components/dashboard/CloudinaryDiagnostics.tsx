@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -7,21 +8,27 @@ import { getCloudinaryConfig, isCloudinaryEnabled } from "@/integrations/cloudin
 import { diagnoseCloudinayConfiguration, testDirectCloudinaryAccess } from "@/integrations/cloudinary/diagnostics";
 import { testCloudinaryConnection, uploadTestFile } from "@/utils/cloudinaryTest";
 
-export function CloudinaryDiagnostics() {
-  const [user, setUser] = useState<any>(null);
+interface CloudinaryDiagnosticsProps {
+  user?: any;
+}
+
+export function CloudinaryDiagnostics({ user: initialUser }: CloudinaryDiagnosticsProps) {
+  const [user, setUser] = useState<any>(initialUser || null);
   const [diagnosisResult, setDiagnosisResult] = useState<any>(null);
   const [directTestResult, setDirectTestResult] = useState<any>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isDirectTestRunning, setIsDirectTestRunning] = useState(false);
   
-  // Get the current user
+  // Get the current user if not provided as prop
   useEffect(() => {
-    const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
-    };
-    getUser();
-  }, []);
+    if (!initialUser) {
+      const getUser = async () => {
+        const { data } = await supabase.auth.getUser();
+        setUser(data.user);
+      };
+      getUser();
+    }
+  }, [initialUser]);
   
   // Get basic config info
   const config = getCloudinaryConfig();
@@ -137,3 +144,4 @@ export function CloudinaryDiagnostics() {
     </Card>
   );
 }
+
