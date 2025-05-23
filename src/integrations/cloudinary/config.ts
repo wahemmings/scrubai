@@ -5,12 +5,17 @@ import config from "@/config";
 export const cloudinaryConfig = {
   cloudName: config.externalServices.cloudinary.cloudName || "",
   enabled: !!config.externalServices.cloudinary.cloudName,
-  uploadPreset: "scrubai_secure",
+  uploadPreset: "scrubai_secure", // Make sure this matches exactly what's in Supabase secrets
   folder: "scrubai_docs",
 };
 
 // Helper functions
 export const isCloudinaryEnabled = (): boolean => {
+  // Add console logging to help debug
+  console.log("Checking if Cloudinary is enabled:", {
+    cloudName: cloudinaryConfig.cloudName,
+    enabled: cloudinaryConfig.enabled
+  });
   return !!cloudinaryConfig.cloudName;
 };
 

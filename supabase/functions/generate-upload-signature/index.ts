@@ -15,6 +15,16 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Log environment variables for debugging (safe, no secrets revealed)
+console.log("Edge function environment check:", {
+  hasSupabaseUrl: !!supabaseUrl,
+  hasSupabaseAnonKey: !!supabaseAnonKey,
+  hasCloudName: !!Deno.env.get('CLOUDINARY_CLOUD_NAME'),
+  hasApiKey: !!Deno.env.get('CLOUDINARY_API_KEY'),
+  hasApiSecret: !!Deno.env.get('CLOUDINARY_API_SECRET'),
+  hasUploadPreset: !!Deno.env.get('CLOUDINARY_UPLOAD_PRESET'),
+});
+
 // Generate a Cloudinary API signature
 function generateSignature(params: Record<string, string | number>, apiSecret: string): string {
   const paramStr = Object.keys(params)
@@ -45,6 +55,13 @@ Deno.serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    // Log auth header info (safe, no token revealed)
+    console.log("Auth header check:", {
+      hasHeader: true,
+      headerLength: authHeader.length,
+      headerType: authHeader.startsWith('Bearer ') ? 'Bearer' : 'Unknown'
+    });
     
     // Get the user's session from their JWT token
     const token = authHeader.replace('Bearer ', '');
@@ -83,7 +100,15 @@ Deno.serve(async (req) => {
       });
       
       return new Response(
-        JSON.stringify({ error: 'Cloudinary configuration not found', details: 'Check that all required secrets are configured in the Supabase dashboard' }),
+        JSON.stringify({ 
+          error: 'Cloudinary configuration not found', 
+          details: 'Check that all required secrets are configured in the Supabase dashboard',
+          missing: {
+            cloudName: !cloudName,
+            apiKey: !apiKey,
+            apiSecret: !apiSecret
+          }
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -130,7 +155,11 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Error generating upload signature:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal Server Error', message: error instanceof Error ? error.message : String(error) }),
+      JSON.stringify({ 
+        error: 'Internal Server Error', 
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

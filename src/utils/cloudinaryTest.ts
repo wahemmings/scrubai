@@ -6,6 +6,14 @@ import { toast } from "sonner";
 
 // Function to test Cloudinary connection
 export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
+  // Force enabled for testing
+  console.log("Starting Cloudinary connection test...");
+  console.log("Environment check:", {
+    cloudinaryEnabled: isCloudinaryEnabled(),
+    userAuthenticated: !!user,
+    cloudNameInEnv: !!import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+  });
+  
   if (!isCloudinaryEnabled()) {
     toast("Cloudinary is not enabled", { 
       description: "Please configure your Cloudinary cloud name in environment variables."
@@ -41,6 +49,19 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
       description: "Requesting upload signature from Supabase Edge Function" 
     });
     
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      console.log("Auth check before edge function call:", {
+        hasAuthUser: !!authUser,
+        userId: authUser?.id
+      });
+    } catch (authError) {
+      console.error("Auth check failed:", authError);
+    }
+    
+    // Log the full request attempt
+    console.log("Calling edge function with path:", 'generate-upload-signature');
+    
     const signatureData = await getUploadSignature(user);
     
     if (!signatureData || !signatureData.signature) {
@@ -67,6 +88,7 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
     // Enhanced error handling with specific messages
     if (error instanceof Error) {
       const errorMsg = error.message;
+      console.log("Error message details:", errorMsg);
       
       if (errorMsg.includes("Failed to fetch") || errorMsg.includes("send a request")) {
         toast.error("Edge Function connection failed", {

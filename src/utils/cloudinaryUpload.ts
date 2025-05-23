@@ -19,6 +19,14 @@ export const getUploadSignature = async (user: any) => {
     
     // Add detailed logging for edge function call
     console.log("Calling generate-upload-signature edge function");
+    console.log("Full edge function path:", `${supabase.functions.url}/generate-upload-signature`);
+    
+    // More detailed request logging
+    console.log("Request details:", {
+      method: 'POST',
+      user_id: user.id,
+      has_access_token: !!session?.access_token?.substring(0, 10) + '...'
+    });
     
     const { data, error } = await supabase.functions.invoke('generate-upload-signature', {
       method: 'POST',
@@ -28,7 +36,11 @@ export const getUploadSignature = async (user: any) => {
       body: JSON.stringify({ user_id: user.id })
     });
     
-    console.log("Edge function response received", { hasData: !!data, hasError: !!error });
+    console.log("Edge function response received", { 
+      hasData: !!data, 
+      hasError: !!error,
+      errorDetails: error ? JSON.stringify(error) : null
+    });
     
     if (error) {
       console.error("Edge function error:", error);

@@ -9,8 +9,8 @@ const config = {
   
   // Feature flags
   features: {
-    // Enable Cloudinary by default for easier testing
-    enableCloudinary: import.meta.env.VITE_ENABLE_CLOUDINARY === 'true' || true,
+    // Force enable Cloudinary for debugging
+    enableCloudinary: true, // Force to true to debug
     enableWasmProcessing: import.meta.env.VITE_ENABLE_WASM_PROCESSING === 'true' || true,
     enableAnalytics: import.meta.env.VITE_ENABLE_ANALYTICS === 'true' || false,
     enableEdgeProcessing: true // For more intensive tasks
@@ -19,7 +19,7 @@ const config = {
   // External services configuration
   externalServices: {
     cloudinary: {
-      cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "da7q81lrh",
+      cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "da7q81lrh", // Use your cloud name from env or default
     },
     analytics: {
       posthogApiKey: import.meta.env.VITE_POSTHOG_API_KEY || "",
@@ -86,10 +86,17 @@ export const env = {
   POSTHOG_HOST: import.meta.env.VITE_POSTHOG_HOST || "",
   SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN || "",
   
-  // Feature flags
-  ENABLE_CLOUDINARY: import.meta.env.VITE_ENABLE_CLOUDINARY === 'true' || true,
+  // Feature flags - force enable Cloudinary for debugging
+  ENABLE_CLOUDINARY: true, // Force to true for debugging
   ENABLE_WASM_PROCESSING: import.meta.env.VITE_ENABLE_WASM_PROCESSING === 'true' || true,
   ENABLE_ANALYTICS: import.meta.env.VITE_ENABLE_ANALYTICS === 'true' || false,
 };
+
+// Log config on initialization for debugging
+console.log("App config initialized:", {
+  cloudinaryEnabled: config.features.enableCloudinary,
+  cloudName: config.externalServices.cloudinary.cloudName,
+  supabaseUrl: config.supabase.url.substring(0, 15) + '...'
+});
 
 export default config;
