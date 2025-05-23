@@ -1,9 +1,9 @@
-
 import config from "@/config";
 
 // Cloudinary configuration
 export const cloudinaryConfig = {
   cloudName: config.externalServices.cloudinary.cloudName || "",
+  apiKey: config.externalServices.cloudinary.apiKey || "",
   enabled: !!config.externalServices.cloudinary.cloudName,
   uploadPreset: config.externalServices.cloudinary.uploadPreset || "scrubai_secure", // Use from config
   folder: "scrubai_docs",
@@ -14,8 +14,11 @@ export const isCloudinaryEnabled = (): boolean => {
   // Add console logging to help debug
   console.log("Checking if Cloudinary is enabled:", {
     cloudName: cloudinaryConfig.cloudName,
+    apiKeyPresent: !!cloudinaryConfig.apiKey,
     enabled: cloudinaryConfig.enabled,
-    uploadPreset: cloudinaryConfig.uploadPreset
+    uploadPreset: cloudinaryConfig.uploadPreset,
+    envCloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "not_set",
+    envApiKey: import.meta.env.VITE_CLOUDINARY_API_KEY ? "present" : "not_set"
   });
   return !!cloudinaryConfig.cloudName;
 };
@@ -39,9 +42,10 @@ export const getCloudinaryThumbnailUrl = (publicId: string, width = 200): string
 };
 
 // Add function to test cloud name and upload preset configuration
-export const getCloudinaryConfig = (): { cloudName: string, uploadPreset: string, enabled: boolean } => {
+export const getCloudinaryConfig = (): { cloudName: string, apiKey: string, uploadPreset: string, enabled: boolean } => {
   return {
     cloudName: cloudinaryConfig.cloudName,
+    apiKey: cloudinaryConfig.apiKey,
     uploadPreset: cloudinaryConfig.uploadPreset,
     enabled: cloudinaryConfig.enabled
   };
