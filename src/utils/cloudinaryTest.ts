@@ -40,13 +40,18 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
     const signatureData = await getUploadSignature(user);
     
     if (!signatureData || !signatureData.signature) {
-      toast("Invalid Cloudinary signature data");
+      toast.error("Invalid Cloudinary signature data");
       console.error("Invalid signature data received:", signatureData);
       return false;
     }
     
-    console.log("Cloudinary signature successfully obtained:", signatureData);
-    toast("Cloudinary connection successful", {
+    console.log("Cloudinary signature successfully obtained:", {
+      cloudName: signatureData.cloudName,
+      timestamp: signatureData.timestamp,
+      hasSignature: !!signatureData.signature
+    });
+    
+    toast.success("Cloudinary connection successful", {
       description: "Your Cloudinary integration is working correctly."
     });
     return true;
@@ -57,25 +62,25 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
     if (error instanceof Error) {
       const errorMsg = error.message;
       
-      if (errorMsg.includes("Failed to send a request to the Edge Function")) {
-        toast("Edge Function connection failed", {
-          description: "Make sure your Supabase Edge Function is deployed correctly and your session is valid."
+      if (errorMsg.includes("Failed to send a request")) {
+        toast.error("Edge Function connection failed", {
+          description: "Make sure your Supabase Edge Function is deployed correctly."
         });
       } else if (errorMsg.includes("Unauthorized") || errorMsg.includes("JWT")) {
-        toast("Authentication error", {
+        toast.error("Authentication error", {
           description: "Your session may have expired. Please log out and log in again."
         });
       } else if (errorMsg.includes("Missing Cloudinary credentials")) {
-        toast("Cloudinary credentials missing", {
+        toast.error("Cloudinary credentials missing", {
           description: "Make sure all required Cloudinary secrets are configured in Supabase."
         });
       } else {
-        toast("Cloudinary connection failed", {
+        toast.error("Cloudinary connection failed", {
           description: errorMsg
         });
       }
     } else {
-      toast("Cloudinary connection failed", {
+      toast.error("Cloudinary connection failed", {
         description: "Unknown error"
       });
     }
@@ -94,7 +99,7 @@ export const uploadTestFile = async (user: any): Promise<void> => {
 
   try {
     // Create a small test file
-    const testBlob = new Blob(['Test file content'], { type: 'text/plain' });
+    const testBlob = new Blob(['Test file content for Cloudinary integration'], { type: 'text/plain' });
     const testFile = new File([testBlob], 'cloudinary-test.txt', { type: 'text/plain' });
     
     // Get upload signature
@@ -108,11 +113,17 @@ export const uploadTestFile = async (user: any): Promise<void> => {
     const result = await secureUploadToCloudinary(testFile, signatureData);
     
     if (result && result.public_id) {
-      toast("Test file uploaded successfully", {
+      toast.success("Test file uploaded successfully", {
         description: `Public ID: ${result.public_id}`
       });
+      
+      console.log("Test upload complete:", {
+        publicId: result.public_id,
+        url: result.secure_url,
+        format: result.format
+      });
     } else {
-      toast("Test upload failed", {
+      toast.error("Test upload failed", {
         description: "Received invalid response from Cloudinary"
       });
     }
@@ -123,25 +134,25 @@ export const uploadTestFile = async (user: any): Promise<void> => {
     if (error instanceof Error) {
       const errorMsg = error.message;
       
-      if (errorMsg.includes("Failed to send a request to the Edge Function")) {
-        toast("Edge Function connection failed", {
-          description: "Make sure your Supabase Edge Function is deployed correctly and secrets are configured."
+      if (errorMsg.includes("Failed to send a request")) {
+        toast.error("Edge Function connection failed", {
+          description: "Make sure your Supabase Edge Function is deployed correctly."
         });
       } else if (errorMsg.includes("Unauthorized") || errorMsg.includes("JWT")) {
-        toast("Authentication error", {
+        toast.error("Authentication error", {
           description: "Your session may have expired. Please log out and log in again."
         });
       } else if (errorMsg.includes("Missing Cloudinary credentials")) {
-        toast("Cloudinary credentials missing", {
+        toast.error("Cloudinary credentials missing", {
           description: "Check that all required Cloudinary secrets are configured in Supabase."
         });
       } else {
-        toast("Test upload failed", {
+        toast.error("Test upload failed", {
           description: errorMsg
         });
       }
     } else {
-      toast("Test upload failed", {
+      toast.error("Test upload failed", {
         description: "Unknown error"
       });
     }

@@ -46,7 +46,11 @@ export const getUploadSignature = async (user: any) => {
       throw new Error("Invalid signature data structure returned from edge function");
     }
     
-    console.log("Upload signature received successfully");
+    console.log("Upload signature received successfully:", {
+      cloudName: data.cloudName,
+      folder: data.folder,
+      timestamp: data.timestamp
+    });
     return data;
   } catch (error) {
     console.error("Edge function request error:", error);
@@ -66,8 +70,15 @@ export const secureUploadToCloudinary = async (file: File, signatureData: any) =
   formData.append('timestamp', signatureData.timestamp.toString());
   formData.append('signature', signatureData.signature);
   formData.append('folder', signatureData.folder);
-  formData.append('public_id', signatureData.publicId);
-  formData.append('upload_preset', signatureData.uploadPreset);
+  
+  // These fields are only added if they exist in the signature data
+  if (signatureData.publicId) {
+    formData.append('public_id', signatureData.publicId);
+  }
+  
+  if (signatureData.uploadPreset) {
+    formData.append('upload_preset', signatureData.uploadPreset);
+  }
   
   const cloudName = signatureData.cloudName;
   
@@ -78,23 +89,33 @@ export const secureUploadToCloudinary = async (file: File, signatureData: any) =
   console.log("Uploading to Cloudinary with params:", {
     cloudName,
     folder: signatureData.folder,
-    preset: signatureData.uploadPreset,
-    publicId: signatureData.publicId
+    preset: signatureData.uploadPreset || 'not specified',
+    publicId: signatureData.publicId || 'auto-generated'
   });
   
-  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
-    method: 'POST',
-    body: formData,
-  });
-  
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(`Upload failed: ${errorData.error?.message || response.statusText}`);
+  try {
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Cloudinary upload failed:", errorData);
+      throw new Error(`Upload failed: ${errorData.error?.message || response.statusText}`);
+    }
+    
+    const result = await response.json();
+    console.log("Cloudinary upload successful:", {
+      publicId: result.public_id,
+      url: result.secure_url,
+      format: result.format
+    });
+    return result;
+  } catch (error) {
+    console.error("Cloudinary upload error:", error);
+    throw error;
   }
-  
-  const result = await response.json();
-  console.log("Cloudinary upload successful:", result);
-  return result;
 };
 
 // Upload file to server with secure Cloudinary process
@@ -126,15 +147,20 @@ export const uploadToServer = async (file: File, jobId: string, user: any) => {
       throw new Error(`Failed to update job: ${jobError.message}`);
     }
     
+    toast.success("File uploaded successfully", {
+      description: "Your file has been uploaded to our secure cloud storage."
+    });
+    
     return {
       fileName: file.name,
       fileSize: file.size,
       contentPath: uploadResult.public_id,
+      url: uploadResult.secure_url,
       expiresAt: signatureData.expiresAt
     };
   } catch (error) {
     console.error("Upload error:", error);
-    toast("Upload failed", {
+    toast.error("Upload failed", {
       description: error instanceof Error ? error.message : "Unknown error"
     });
     throw error;
