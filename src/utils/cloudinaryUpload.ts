@@ -126,8 +126,7 @@ export const uploadToServer = async (file: File, jobId: string, user: any) => {
   } catch (error) {
     console.error("Upload error:", error);
     toast("Upload failed", {
-      description: error instanceof Error ? error.message : "Unknown error",
-      variant: "destructive"
+      description: error instanceof Error ? error.message : "Unknown error"
     });
     throw error;
   }
