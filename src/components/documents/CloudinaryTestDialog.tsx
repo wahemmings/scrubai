@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import CloudinaryDiagnostics from "@/components/dashboard/CloudinaryDiagnostics";
+import { CloudinaryDiagnostics } from "@/components/dashboard/CloudinaryDiagnostics";
 
 interface CloudinaryTestDialogProps {
   open: boolean;

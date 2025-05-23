@@ -36,9 +36,7 @@ export const uploadTestFile = async (user: any): Promise<void> => {
     console.log("Requesting signature with public_id:", testPublicId);
     
     // This gets a signature that includes the public_id in the signature calculation
-    const signatureData = await getUploadSignature(user, {
-      public_id: testPublicId
-    });
+    const signatureData = await getUploadSignature(user);
     
     // Log the signature data for debugging
     console.log("Upload signature received for test:", {

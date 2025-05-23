@@ -1,7 +1,11 @@
 
 // This file is kept for backward compatibility
 // New implementations should use the files in src/integrations/cloudinary/diagnostics.ts
-import { testEdgeFunctionClient, testEdgeFunctionDirect, testCloudinaryConfig } from '@/integrations/cloudinary/diagnostics';
+import { 
+  testEdgeFunctionClient,
+  testEdgeFunctionDirect, 
+  testCloudinaryConfig 
+} from '@/integrations/cloudinary/diagnostics';
 import config from '@/config';
 
 export { testEdgeFunctionClient, testEdgeFunctionDirect, testCloudinaryConfig };
