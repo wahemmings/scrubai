@@ -1,211 +1,167 @@
 import { supabase } from "@/integrations/supabase/client";
-import config from "@/config";
+import { cloudinaryConfig, getCloudinaryConfig } from "./config";
 
-// Test the edge function client connection
-export const testEdgeFunctionClient = async (user: any) => {
+/**
+ * Comprehensive diagnostic function to check Cloudinary configuration
+ * This will help troubleshoot connection issues
+ */
+export const diagnoseCloudinayConfiguration = async () => {
+  // Check client-side configuration
+  console.group("🔍 Cloudinary Configuration Diagnostics");
+  
   try {
-    // Get the user's session
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      return {
-        success: false,
-        message: "No valid session token found",
-        error: "Authentication required"
-      };
-    }
-    
-    // Call the edge function using the Supabase client
-    const { data, error } = await supabase.functions.invoke('generate-upload-signature', {
-      method: 'POST',
-      body: { user_id: user.id, _dummy_query: "test" }
+    // 1. Check client-side environment variables
+    console.log("Environment Variables:", {
+      CLOUDINARY_CLOUD_NAME: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "❌ Missing",
+      CLOUDINARY_API_KEY: import.meta.env.VITE_CLOUDINARY_API_KEY ? "✅ Set" : "❌ Missing",
+      CLOUDINARY_UPLOAD_PRESET: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "❌ Missing",
+      ENABLE_CLOUDINARY: import.meta.env.VITE_ENABLE_CLOUDINARY || "❌ Missing"
     });
+
+    // 2. Check config object
+    const config = getCloudinaryConfig();
+    console.log("Configuration Object:", {
+      cloudName: config.cloudName || "❌ Missing",
+      apiKeyPresent: !!config.apiKey ? "✅ Set" : "❌ Missing",
+      uploadPreset: config.uploadPreset || "❌ Missing",
+      enabled: config.enabled ? "✅ Enabled" : "❌ Disabled"
+    });
+
+    // 3. Check authentication status
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log("Supabase Authentication:", {
+      authenticated: !!session ? "✅ Authenticated" : "❌ Not authenticated",
+      sessionExpires: session?.expires_at ? new Date(session.expires_at * 1000).toLocaleString() : "N/A",
+      hasAccessToken: !!session?.access_token ? "✅ Valid token" : "❌ No access token"
+    });
+
+    // 4. Test Edge Function
+    console.log("Testing Edge Function connectivity...");
     
-    if (error) {
+    try {
+      if (!session?.access_token) {
+        console.error("Cannot test edge function without authentication");
+        return {
+          clientConfigOk: !!config.cloudName,
+          authenticated: false,
+          edgeFunctionAccessible: false,
+          supabaseSecretsConfigured: false
+        };
+      }
+      
+      // Simple edge function call to test connection
+      const { data, error } = await supabase.functions.invoke('generate-upload-signature', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ test_mode: true })
+      });
+      
+      if (error) {
+        console.error("Edge function error:", error);
+        return {
+          clientConfigOk: !!config.cloudName,
+          authenticated: true,
+          edgeFunctionAccessible: false,
+          supabaseSecretsConfigured: false,
+          error: error.message
+        };
+      }
+      
+      if (!data) {
+        console.error("No data returned from edge function");
+        return {
+          clientConfigOk: !!config.cloudName,
+          authenticated: true,
+          edgeFunctionAccessible: true,
+          supabaseSecretsConfigured: false,
+          error: "Empty response from edge function"
+        };
+      }
+      
+      // Check if we got valid data back
+      const secretsConfigured = data.environmentCheck && data.environmentCheck.hasApiSecret;
+      console.log("Edge Function Response:", {
+        edgeFunctionAccessible: "✅ Accessible",
+        supabaseSecretsConfigured: secretsConfigured ? "✅ Configured" : "❌ Missing",
+        cloudNameMatches: data.cloudName === config.cloudName ? "✅ Matches" : "❌ Mismatch"
+      });
+      
       return {
-        success: false,
-        message: "Edge function client connection failed",
-        error
+        clientConfigOk: !!config.cloudName,
+        authenticated: true,
+        edgeFunctionAccessible: true,
+        supabaseSecretsConfigured: secretsConfigured,
+        cloudNameMatches: data.cloudName === config.cloudName,
+      };
+    } catch (error) {
+      console.error("Edge function connectivity test failed:", error);
+      return {
+        clientConfigOk: !!config.cloudName,
+        authenticated: !!session,
+        edgeFunctionAccessible: false,
+        supabaseSecretsConfigured: false,
+        error: error instanceof Error ? error.message : "Unknown error"
       };
     }
-    
-    return {
-      success: true,
-      message: "Edge function client connection successful",
-      data
-    };
   } catch (error) {
+    console.error("Diagnostics failed:", error);
     return {
-      success: false,
-      message: "Edge function client connection failed with exception",
-      error
+      error: error instanceof Error ? error.message : "Unknown error" 
     };
+  } finally {
+    console.groupEnd();
   }
 };
 
-// Test direct connection to edge function
-export const testEdgeFunctionDirect = async (user: any) => {
+/**
+ * Function to test direct Cloudinary connectivity (without Supabase)
+ * This can help determine if the issue is with Cloudinary or Supabase
+ */
+export const testDirectCloudinaryAccess = async () => {
+  console.group("🔍 Direct Cloudinary API Test");
+  
   try {
-    // Get the user's session
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      return {
-        success: false,
-        message: "No valid session token found",
-        error: "Authentication required"
-      };
+    // Only attempt if we have a cloud name
+    const { cloudName, apiKey } = getCloudinaryConfig();
+    
+    if (!cloudName) {
+      console.error("Cannot test Cloudinary API without cloud name");
+      return { success: false, error: "Missing cloud name" };
     }
     
-    const supabaseFunctionsUrl = config.supabase.functionsUrl || 
-                               `${config.supabase.url}/functions/v1`;
-    
-    // Make direct fetch request to the edge function
-    const response = await fetch(`${supabaseFunctionsUrl}/generate-upload-signature`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.access_token}`
-      },
-      body: JSON.stringify({ 
-        user_id: user.id,
-        timestamp: Math.floor(Date.now() / 1000)
-      })
+    // Test if we can reach the Cloudinary API (just a ping, not a full upload)
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/ping`, {
+      method: 'GET'
     });
     
     if (!response.ok) {
       const errorText = await response.text();
-      return {
-        success: false,
-        message: `Edge function direct connection failed: ${response.status} ${response.statusText}`,
-        error: errorText
+      console.error("Cloudinary ping failed:", errorText);
+      return { 
+        success: false, 
+        status: response.status,
+        error: errorText 
       };
     }
     
-    const data = await response.json();
-    
-    return {
+    const result = await response.json();
+    console.log("Cloudinary ping successful:", result);
+    return { 
       success: true,
-      message: "Edge function direct connection successful",
-      data
+      cloudName,
+      apiKeyProvided: !!apiKey,
+      response: result
     };
   } catch (error) {
-    return {
-      success: false,
-      message: "Edge function direct connection failed with exception",
-      error
+    console.error("Direct Cloudinary test failed:", error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "Unknown error" 
     };
+  } finally {
+    console.groupEnd();
   }
-};
-
-// Test cloudinary configuration
-export const testCloudinaryConfig = () => {
-  const cloudName = config.externalServices.cloudinary.cloudName;
-  const uploadPreset = config.externalServices.cloudinary.uploadPreset;
-  
-  if (!cloudName) {
-    return {
-      success: false,
-      message: "Cloudinary cloud name is not configured",
-      error: "Missing CLOUDINARY_CLOUD_NAME"
-    };
-  }
-  
-  if (!uploadPreset) {
-    return {
-      success: false,
-      message: "Cloudinary upload preset is not configured",
-      error: "Missing CLOUDINARY_UPLOAD_PRESET"
-    };
-  }
-  
-  return {
-    success: true,
-    message: "Cloudinary configuration is valid",
-    data: {
-      cloudName,
-      uploadPreset
-    }
-  };
-};
-
-// Run all diagnostics for Cloudinary integration
-export const runFullDiagnostics = async (user: any) => {
-  // Test Supabase connection
-  const supabaseTest = {
-    success: !!supabase,
-    message: supabase ? "Supabase client initialized successfully" : "Supabase client failed to initialize",
-    details: {
-      url: config.supabase.url ? "configured" : "missing",
-      anonKey: config.supabase.anonKey ? "configured" : "missing"
-    }
-  };
-
-  // Test Cloudinary configuration
-  const cloudinaryConfigTest = testCloudinaryConfig();
-  
-  // Test Edge Function via Supabase client
-  const edgeFunctionClientTest = await testEdgeFunctionClient(user);
-  
-  // Test Edge Function via direct fetch
-  const edgeFunctionDirectTest = await testEdgeFunctionDirect(user);
-  
-  // Test direct upload to Cloudinary
-  const testFile = new File(["test"], "test.txt", { type: "text/plain" });
-  let cloudinaryDirectUploadTest: {
-    success: boolean;
-    message: string;
-    error?: any;
-    details?: {
-      apiKeyProvided?: boolean;
-      signatureProvided?: boolean;
-      cloudName?: string;
-    };
-  } = {
-    success: false,
-    message: "Cloudinary direct upload not tested",
-    error: "Test skipped"
-  };
-  
-  // Only test direct upload if edge function test was successful
-  if (edgeFunctionClientTest.success || edgeFunctionDirectTest.success) {
-    try {
-      const signatureData = edgeFunctionClientTest.success 
-                          ? edgeFunctionClientTest.data 
-                          : edgeFunctionDirectTest.data;
-      
-      if (signatureData && signatureData.signature) {
-        // Create a dummy FormData object to test the upload process
-        const formData = new FormData();
-        formData.append('file', testFile);
-        formData.append('api_key', signatureData.apiKey);
-        formData.append('timestamp', signatureData.timestamp.toString());
-        formData.append('signature', signatureData.signature);
-        
-        // Don't actually perform the upload, just verify that we could
-        cloudinaryDirectUploadTest = {
-          success: true,
-          message: "Cloudinary direct upload preparation successful",
-          details: {
-            apiKeyProvided: !!signatureData.apiKey,
-            signatureProvided: !!signatureData.signature,
-            cloudName: signatureData.cloudName
-          }
-        };
-      }
-    } catch (error) {
-      cloudinaryDirectUploadTest = {
-        success: false,
-        message: "Cloudinary direct upload test failed",
-        error
-      };
-    }
-  }
-  
-  // Return all test results
-  return {
-    supabase: supabaseTest,
-    cloudinaryConfig: cloudinaryConfigTest,
-    edgeFunctionClient: edgeFunctionClientTest,
-    edgeFunctionDirect: edgeFunctionDirectTest,
-    cloudinaryDirectUpload: cloudinaryDirectUploadTest
-  };
 };
