@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -7,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getCloudinaryConfig, isCloudinaryEnabled } from "@/integrations/cloudinary/config";
 import { diagnoseCloudinayConfiguration, testDirectCloudinaryAccess } from "@/integrations/cloudinary/diagnostics";
 import { testCloudinaryConnection, uploadTestFile } from "@/utils/cloudinaryTest";
+import { testSignatureGeneration } from "@/utils/cloudinary/signatureTest";
 
 interface CloudinaryDiagnosticsProps {
   user?: any;
@@ -16,8 +16,10 @@ export function CloudinaryDiagnostics({ user: initialUser }: CloudinaryDiagnosti
   const [user, setUser] = useState<any>(initialUser || null);
   const [diagnosisResult, setDiagnosisResult] = useState<any>(null);
   const [directTestResult, setDirectTestResult] = useState<any>(null);
+  const [signatureTestResult, setSignatureTestResult] = useState<any>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isDirectTestRunning, setIsDirectTestRunning] = useState(false);
+  const [isSignatureTestRunning, setIsSignatureTestRunning] = useState(false);
   
   // Get the current user if not provided as prop
   useEffect(() => {
@@ -54,6 +56,23 @@ export function CloudinaryDiagnostics({ user: initialUser }: CloudinaryDiagnosti
       setDirectTestResult({ error: error instanceof Error ? error.message : 'Unknown error' });
     } finally {
       setIsDirectTestRunning(false);
+    }
+  };
+
+  const runSignatureTest = async () => {
+    if (!user) return;
+    
+    setIsSignatureTestRunning(true);
+    try {
+      const result = await testSignatureGeneration(user);
+      setSignatureTestResult(result);
+    } catch (error) {
+      setSignatureTestResult({ 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: Date.now()
+      });
+    } finally {
+      setIsSignatureTestRunning(false);
     }
   };
   
@@ -122,6 +141,19 @@ export function CloudinaryDiagnostics({ user: initialUser }: CloudinaryDiagnosti
             </AlertDescription>
           </Alert>
         )}
+
+        {signatureTestResult && (
+          <Alert className={signatureTestResult.validationResult?.wouldPassNewValidation ? 'bg-green-50' : 'bg-red-50'}>
+            <AlertTitle>
+              {signatureTestResult.validationResult?.wouldPassNewValidation ? 'Signature Test Passed' : 'Signature Test Failed'}
+            </AlertTitle>
+            <AlertDescription>
+              <pre className="mt-2 w-full overflow-auto text-xs p-2 rounded bg-slate-100">
+                {JSON.stringify(signatureTestResult, null, 2)}
+              </pre>
+            </AlertDescription>
+          </Alert>
+        )}
       </CardContent>
       
       <CardFooter className="flex flex-wrap gap-3">
@@ -135,6 +167,10 @@ export function CloudinaryDiagnostics({ user: initialUser }: CloudinaryDiagnosti
         
         <Button variant="secondary" onClick={runConnectionTest} disabled={!user}>
           Test Edge Function
+        </Button>
+        
+        <Button variant="secondary" onClick={runSignatureTest} disabled={!user || isSignatureTestRunning}>
+          {isSignatureTestRunning ? 'Testing Signature...' : 'Test Signature Fix'}
         </Button>
         
         <Button variant="secondary" onClick={runUploadTest} disabled={!user}>
