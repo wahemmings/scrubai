@@ -1,368 +1,139 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Check, X, AlertTriangle, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
-import { runFullDiagnostics, testEdgeFunctionClient, testEdgeFunctionDirect, testCloudinaryConfig } from "@/utils/diagnostics";
-import { toast } from "sonner";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
+import { getCloudinaryConfig, isCloudinaryEnabled } from "@/integrations/cloudinary/config";
+import { diagnoseCloudinayConfiguration, testDirectCloudinaryAccess } from "@/integrations/cloudinary/diagnostics";
+import { testCloudinaryConnection, uploadTestFile } from "@/utils/cloudinaryTest";
 
-interface DiagnosticResultProps {
-  success: boolean;
-  message: string;
-  details?: any;
-  error?: any;
-  isExpanded?: boolean;
-}
-
-const DiagnosticResult: React.FC<DiagnosticResultProps> = ({ 
-  success, 
-  message, 
-  details, 
-  error,
-  isExpanded = false
-}) => {
-  const [expanded, setExpanded] = useState(isExpanded);
-  
-  return (
-    <Alert className={`mb-4 ${success ? 'bg-green-50 dark:bg-green-950/30 border-green-200' : 'bg-red-50 dark:bg-red-950/30 border-red-200'}`}>
-      <div className="flex items-center justify-between w-full">
-        <div className="flex items-center">
-          {success ? (
-            <Check className="h-5 w-5 text-green-600 mr-2" />
-          ) : (
-            <X className="h-5 w-5 text-red-600 mr-2" />
-          )}
-          <AlertTitle className="font-semibold">{message}</AlertTitle>
-        </div>
-        
-        {(details || error) && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setExpanded(!expanded)}
-            className="ml-auto"
-          >
-            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </Button>
-        )}
-      </div>
-      
-      {expanded && (details || error) && (
-        <AlertDescription className="mt-4">
-          {details && (
-            <div className="bg-background p-3 rounded-md my-2">
-              <pre className="text-xs overflow-auto whitespace-pre-wrap">
-                {JSON.stringify(details, null, 2)}
-              </pre>
-            </div>
-          )}
-          
-          {error && (
-            <div className="bg-red-50 dark:bg-red-950/30 p-3 rounded-md my-2 border border-red-200">
-              <h4 className="text-sm font-medium mb-1">Error Details:</h4>
-              <pre className="text-xs overflow-auto whitespace-pre-wrap text-red-600">
-                {typeof error === 'object' ? JSON.stringify(error, null, 2) : String(error)}
-              </pre>
-            </div>
-          )}
-        </AlertDescription>
-      )}
-    </Alert>
-  );
-};
-
-interface CloudinaryDiagnosticsProps {
-  user: any;
-  onClose?: () => void;
-}
-
-const CloudinaryDiagnostics: React.FC<CloudinaryDiagnosticsProps> = ({ user, onClose }) => {
-  const [results, setResults] = useState<any>(null);
+export function CloudinaryDiagnostics() {
+  const [user, setUser] = useState<any>(null);
+  const [diagnosisResult, setDiagnosisResult] = useState<any>(null);
+  const [directTestResult, setDirectTestResult] = useState<any>(null);
   const [isRunning, setIsRunning] = useState(false);
-  const [activeTab, setActiveTab] = useState("basic");
+  const [isDirectTestRunning, setIsDirectTestRunning] = useState(false);
   
-  const handleRunTest = async (testType: string) => {
-    if (!user) {
-      toast.error("You need to be logged in to run diagnostics");
-      return;
-    }
-    
+  // Get the current user
+  useEffect(() => {
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    };
+    getUser();
+  }, []);
+  
+  // Get basic config info
+  const config = getCloudinaryConfig();
+  
+  const runDiagnostics = async () => {
     setIsRunning(true);
     try {
-      let testResult;
-      
-      switch (testType) {
-        case "edgeFunctionClient":
-          testResult = await testEdgeFunctionClient(user);
-          setResults({ edgeFunctionClient: testResult });
-          break;
-        case "edgeFunctionDirect":
-          testResult = await testEdgeFunctionDirect(user);
-          setResults({ edgeFunctionDirect: testResult });
-          break;
-        case "cloudinaryConfig":
-          testResult = testCloudinaryConfig();
-          setResults({ cloudinaryConfig: testResult });
-          break;
-        case "full":
-          const fullResults = await runFullDiagnostics(user);
-          setResults(fullResults);
-          break;
-        default:
-          toast.error("Unknown test type");
-      }
+      const result = await diagnoseCloudinayConfiguration();
+      setDiagnosisResult(result);
     } catch (error) {
-      toast.error("Error running diagnostics", {
-        description: error instanceof Error ? error.message : "Unknown error"
-      });
+      setDiagnosisResult({ error: error instanceof Error ? error.message : 'Unknown error' });
     } finally {
       setIsRunning(false);
     }
   };
   
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    setResults(null); // Clear results when changing tabs
+  const runDirectTest = async () => {
+    setIsDirectTestRunning(true);
+    try {
+      const result = await testDirectCloudinaryAccess();
+      setDirectTestResult(result);
+    } catch (error) {
+      setDirectTestResult({ error: error instanceof Error ? error.message : 'Unknown error' });
+    } finally {
+      setIsDirectTestRunning(false);
+    }
   };
   
-  const getSummaryStatus = () => {
-    if (!results) return null;
-    
-    const allTests = Object.values(results) as DiagnosticResultProps[];
-    const passedTests = allTests.filter(test => test.success).length;
-    
-    return {
-      total: allTests.length,
-      passed: passedTests,
-      success: passedTests === allTests.length
-    };
+  const runConnectionTest = async () => {
+    if (user) {
+      await testCloudinaryConnection(user);
+    }
   };
   
-  const summaryStatus = getSummaryStatus();
-  
+  const runUploadTest = async () => {
+    if (user) {
+      await uploadTestFile(user);
+    }
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Cloudinary Connection Diagnostics</CardTitle>
-            <CardDescription>
-              Test your Cloudinary integration and identify issues
-            </CardDescription>
-          </div>
-          {summaryStatus && (
-            <Badge variant={summaryStatus.success ? "outline" : "destructive"}>
-              {summaryStatus.passed}/{summaryStatus.total} Tests Passed
-            </Badge>
-          )}
-        </div>
+        <CardTitle>Cloudinary Diagnostics</CardTitle>
+        <CardDescription>Troubleshoot your Cloudinary connection issues</CardDescription>
       </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="basic" value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="basic">Basic Tests</TabsTrigger>
-            <TabsTrigger value="advanced">Advanced Diagnostics</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="basic">
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                Run these individual tests to check specific components of your Cloudinary integration.
-              </p>
-              
-              <div className="grid gap-4 md:grid-cols-3">
-                <Button 
-                  onClick={() => handleRunTest("cloudinaryConfig")} 
-                  disabled={isRunning}
-                  className="flex-col h-auto py-4"
-                >
-                  <span className="font-semibold">Check Configuration</span>
-                  <span className="text-xs mt-1 text-muted">Verify Cloudinary settings</span>
-                </Button>
-                
-                <Button 
-                  onClick={() => handleRunTest("edgeFunctionClient")} 
-                  disabled={isRunning}
-                  className="flex-col h-auto py-4"
-                  variant="outline"
-                >
-                  <span className="font-semibold">Test Edge Function</span>
-                  <span className="text-xs mt-1 text-muted">Via Supabase client</span>
-                </Button>
-                
-                <Button 
-                  onClick={() => handleRunTest("edgeFunctionDirect")} 
-                  disabled={isRunning}
-                  className="flex-col h-auto py-4"
-                  variant="outline"
-                >
-                  <span className="font-semibold">Test Direct Connection</span>
-                  <span className="text-xs mt-1 text-muted">Direct API call</span>
-                </Button>
-              </div>
-              
-              {results && Object.keys(results).length === 1 && (
-                <div className="mt-6">
-                  <h3 className="text-lg font-semibold mb-2">Test Results:</h3>
-                  {Object.entries(results).map(([key, result]: [string, any]) => (
-                    <DiagnosticResult 
-                      key={key}
-                      success={result.success}
-                      message={result.message}
-                      details={result.details}
-                      error={result.error}
-                      isExpanded={true}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="advanced">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Run a comprehensive diagnostic suite to test all aspects of your Cloudinary integration.
-                </p>
-                <Button 
-                  onClick={() => handleRunTest("full")} 
-                  disabled={isRunning}
-                  className="flex items-center"
-                >
-                  {isRunning ? (
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <AlertTriangle className="h-4 w-4 mr-2" />
-                  )}
-                  Run Full Diagnostics
-                </Button>
-              </div>
-              
-              {results && Object.keys(results).length > 1 && (
-                <div className="mt-6">
-                  <h3 className="text-lg font-semibold mb-4">Diagnostic Results:</h3>
-                  <ScrollArea className="h-[400px] pr-4">
-                    <Accordion type="single" collapsible defaultValue="supabase">
-                      <AccordionItem value="supabase">
-                        <AccordionTrigger className="flex items-center">
-                          <div className="flex items-center">
-                            {results.supabase.success ? (
-                              <Check className="h-4 w-4 text-green-600 mr-2" />
-                            ) : (
-                              <X className="h-4 w-4 text-red-600 mr-2" />
-                            )}
-                            <span>Supabase Connection</span>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <DiagnosticResult 
-                            success={results.supabase.success}
-                            message={results.supabase.message}
-                            details={results.supabase.details}
-                            error={results.supabase.error}
-                          />
-                        </AccordionContent>
-                      </AccordionItem>
-                      
-                      <AccordionItem value="cloudinaryConfig">
-                        <AccordionTrigger>
-                          <div className="flex items-center">
-                            {results.cloudinaryConfig.success ? (
-                              <Check className="h-4 w-4 text-green-600 mr-2" />
-                            ) : (
-                              <X className="h-4 w-4 text-red-600 mr-2" />
-                            )}
-                            <span>Cloudinary Configuration</span>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <DiagnosticResult 
-                            success={results.cloudinaryConfig.success}
-                            message={results.cloudinaryConfig.message}
-                            details={results.cloudinaryConfig.details}
-                            error={results.cloudinaryConfig.error}
-                          />
-                        </AccordionContent>
-                      </AccordionItem>
-                      
-                      <AccordionItem value="edgeFunctionClient">
-                        <AccordionTrigger>
-                          <div className="flex items-center">
-                            {results.edgeFunctionClient.success ? (
-                              <Check className="h-4 w-4 text-green-600 mr-2" />
-                            ) : (
-                              <X className="h-4 w-4 text-red-600 mr-2" />
-                            )}
-                            <span>Edge Function (Supabase Client)</span>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <DiagnosticResult 
-                            success={results.edgeFunctionClient.success}
-                            message={results.edgeFunctionClient.message}
-                            details={results.edgeFunctionClient.details}
-                            error={results.edgeFunctionClient.error}
-                          />
-                        </AccordionContent>
-                      </AccordionItem>
-                      
-                      <AccordionItem value="edgeFunctionDirect">
-                        <AccordionTrigger>
-                          <div className="flex items-center">
-                            {results.edgeFunctionDirect.success ? (
-                              <Check className="h-4 w-4 text-green-600 mr-2" />
-                            ) : (
-                              <X className="h-4 w-4 text-red-600 mr-2" />
-                            )}
-                            <span>Edge Function (Direct Call)</span>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <DiagnosticResult 
-                            success={results.edgeFunctionDirect.success}
-                            message={results.edgeFunctionDirect.message}
-                            details={results.edgeFunctionDirect.details}
-                            error={results.edgeFunctionDirect.error}
-                          />
-                        </AccordionContent>
-                      </AccordionItem>
-                      
-                      <AccordionItem value="cloudinaryDirectUpload">
-                        <AccordionTrigger>
-                          <div className="flex items-center">
-                            {results.cloudinaryDirectUpload.success ? (
-                              <Check className="h-4 w-4 text-green-600 mr-2" />
-                            ) : (
-                              <X className="h-4 w-4 text-red-600 mr-2" />
-                            )}
-                            <span>Cloudinary Direct Upload</span>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <DiagnosticResult 
-                            success={results.cloudinaryDirectUpload.success}
-                            message={results.cloudinaryDirectUpload.message}
-                            details={results.cloudinaryDirectUpload.details}
-                            error={results.cloudinaryDirectUpload.error}
-                          />
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  </ScrollArea>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
+      
+      <CardContent className="space-y-6">
+        <section className="space-y-2">
+          <h3 className="text-lg font-medium">Basic Configuration</h3>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="font-medium">Cloud Name:</div>
+            <div>{config.cloudName || 'Not set'}</div>
+            
+            <div className="font-medium">API Key:</div>
+            <div>{config.apiKey ? '✅ Set' : '❌ Not set'}</div>
+            
+            <div className="font-medium">Upload Preset:</div>
+            <div>{config.uploadPreset || 'Not set'}</div>
+            
+            <div className="font-medium">Status:</div>
+            <div>{isCloudinaryEnabled() ? '✅ Enabled' : '❌ Disabled'}</div>
+            
+            <div className="font-medium">Authenticated:</div>
+            <div>{user ? '✅ Yes' : '❌ No'}</div>
+          </div>
+        </section>
+        
+        {diagnosisResult && (
+          <Alert className={diagnosisResult.error ? 'bg-red-50' : 'bg-green-50'}>
+            <AlertTitle>
+              {diagnosisResult.error ? 'Diagnosis Failed' : 'Diagnosis Results'}
+            </AlertTitle>
+            <AlertDescription>
+              <pre className="mt-2 w-full overflow-auto text-xs p-2 rounded bg-slate-100">
+                {JSON.stringify(diagnosisResult, null, 2)}
+              </pre>
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {directTestResult && (
+          <Alert className={directTestResult.success ? 'bg-green-50' : 'bg-red-50'}>
+            <AlertTitle>
+              {directTestResult.success ? 'Direct Test Successful' : 'Direct Test Failed'}
+            </AlertTitle>
+            <AlertDescription>
+              <pre className="mt-2 w-full overflow-auto text-xs p-2 rounded bg-slate-100">
+                {JSON.stringify(directTestResult, null, 2)}
+              </pre>
+            </AlertDescription>
+          </Alert>
+        )}
       </CardContent>
+      
+      <CardFooter className="flex flex-wrap gap-3">
+        <Button onClick={runDiagnostics} disabled={isRunning}>
+          {isRunning ? 'Running Diagnostics...' : 'Run Full Diagnostics'}
+        </Button>
+        
+        <Button variant="outline" onClick={runDirectTest} disabled={isDirectTestRunning}>
+          {isDirectTestRunning ? 'Testing...' : 'Test Direct Access'}
+        </Button>
+        
+        <Button variant="secondary" onClick={runConnectionTest} disabled={!user}>
+          Test Edge Function
+        </Button>
+        
+        <Button variant="secondary" onClick={runUploadTest} disabled={!user}>
+          Test Upload
+        </Button>
+      </CardFooter>
     </Card>
   );
-};
-
-export default CloudinaryDiagnostics;
+}
