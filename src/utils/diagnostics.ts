@@ -14,19 +14,20 @@ interface DiagnosticResult {
  */
 export const testSupabaseConnection = async (): Promise<DiagnosticResult> => {
   try {
-    const { data, error } = await supabase.from('_dummy_query').select('*').limit(1);
+    // Check authentication status since we can't use _dummy_query
+    const { data: authData } = await supabase.auth.getSession();
+    const isAuthenticated = !!authData.session;
     
-    if (error) {
+    // Try a simple ping to the Supabase API
+    const { error } = await supabase.rpc('ping', {}).maybeSingle();
+    
+    if (error && error.message !== 'function ping() does not exist') {
       return {
         success: false,
         message: "Supabase connection failed",
         error
       };
     }
-    
-    // Check authentication status
-    const { data: authData } = await supabase.auth.getSession();
-    const isAuthenticated = !!authData.session;
     
     return {
       success: true,
