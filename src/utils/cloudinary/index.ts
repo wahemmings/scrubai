@@ -1,11 +1,14 @@
 
-// Export all Cloudinary utilities from a single entry point
-export * from './uploadSignature';
-export * from './fileUpload';
-export * from './serverUpload';
-export * from './testUpload';
+// Export connection testing functions
+export * from "./connection";
+export * from "./upload";
 
-// Re-export for backward compatibility
-export { uploadToServer } from './serverUpload';
-export { testCloudinaryConnection as testConnection } from './testUpload';
+// For backward compatibility
+import { testCloudinaryConnection } from "./connection";
+import { uploadTestFile } from "./upload";
 
+// Re-export using the old names for backward compatibility
+export default {
+  testCloudinaryConnection,
+  uploadTestFile
+};
