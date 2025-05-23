@@ -150,21 +150,28 @@ export const uploadTestFile = async (user: any): Promise<void> => {
     // Start upload
     toast("Uploading test file to Cloudinary...");
     
-    // Create a public_id for the test file in the user's folder
-    // This is important: We need to include it in a NEW signature request
-    const testPublicId = `${signatureData.folder}/test/${testId}`;
+    // IMPORTANT: Don't create separate publicId variables - use EXACT SAME string in both places
+    // The string comparison in Cloudinary is exact, so even tiny differences will cause signature failure
+    const testId = `test_${Math.random().toString(36).substring(2, 10)}`;
+    const exactPublicId = `scrubai/${user.id}/test/${testId}`;
     
-    // Make a NEW signature request with the public_id included to ensure it's part of the signature
-    const newSignatureData = await getUploadSignature(user, {
-      public_id: testPublicId
+    // CRITICAL: Make a completely new request with the exact public_id that will be used in upload
+    console.log(`Requesting signature with explicit public_id: ${exactPublicId}`);
+    const uploadParams = await getUploadSignature(user, {
+      public_id: exactPublicId
     });
     
-    // Use the signature data directly since public_id was included in the signature
-    // This ensures we're getting a signature that was calculated with this public_id
-    const uploadParams = {
-      ...newSignatureData,
-      publicId: testPublicId
-    };
+    // Make sure the exact same string is used as publicId for upload
+    uploadParams.publicId = exactPublicId;
+    
+    // Log the exact parameters that will be used for upload
+    console.log("Final upload parameters:", {
+      publicId: uploadParams.publicId,
+      folder: uploadParams.folder,
+      uploadPreset: uploadParams.uploadPreset,
+      timestamp: uploadParams.timestamp,
+      signatureLength: uploadParams.signature?.length || 0
+    });
     
     console.log("Using upload parameters:", {
       publicId: uploadParams.publicId,
