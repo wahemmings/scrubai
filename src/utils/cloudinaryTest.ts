@@ -37,6 +37,10 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
     
     // Attempt to get upload signature from edge function
     console.log("Requesting upload signature from edge function...");
+    toast("Contacting edge function...", { 
+      description: "Requesting upload signature from Supabase Edge Function" 
+    });
+    
     const signatureData = await getUploadSignature(user);
     
     if (!signatureData || !signatureData.signature) {
@@ -48,11 +52,13 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
     console.log("Cloudinary signature successfully obtained:", {
       cloudName: signatureData.cloudName,
       timestamp: signatureData.timestamp,
-      hasSignature: !!signatureData.signature
+      hasSignature: !!signatureData.signature,
+      folder: signatureData.folder,
+      uploadPreset: signatureData.uploadPreset || 'default'
     });
     
     toast.success("Cloudinary connection successful", {
-      description: "Your Cloudinary integration is working correctly."
+      description: `Connected to cloud: ${signatureData.cloudName}, preset: ${signatureData.uploadPreset || 'scrubai_secure'}`
     });
     return true;
   } catch (error) {
@@ -62,9 +68,9 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
     if (error instanceof Error) {
       const errorMsg = error.message;
       
-      if (errorMsg.includes("Failed to send a request")) {
+      if (errorMsg.includes("Failed to fetch") || errorMsg.includes("send a request")) {
         toast.error("Edge Function connection failed", {
-          description: "Make sure your Supabase Edge Function is deployed correctly."
+          description: "Unable to reach the Supabase Edge Function. Check edge function logs."
         });
       } else if (errorMsg.includes("Unauthorized") || errorMsg.includes("JWT")) {
         toast.error("Authentication error", {
@@ -106,6 +112,14 @@ export const uploadTestFile = async (user: any): Promise<void> => {
     toast("Requesting upload signature...");
     const signatureData = await getUploadSignature(user);
     
+    // Log the signature data for debugging
+    console.log("Upload signature received for test:", {
+      cloudName: signatureData.cloudName,
+      hasApiKey: !!signatureData.apiKey,
+      folder: signatureData.folder,
+      uploadPreset: signatureData.uploadPreset || 'default'
+    });
+    
     // Start upload
     toast("Uploading test file to Cloudinary...");
     
@@ -114,13 +128,14 @@ export const uploadTestFile = async (user: any): Promise<void> => {
     
     if (result && result.public_id) {
       toast.success("Test file uploaded successfully", {
-        description: `Public ID: ${result.public_id}`
+        description: `File ID: ${result.public_id}`
       });
       
       console.log("Test upload complete:", {
         publicId: result.public_id,
         url: result.secure_url,
-        format: result.format
+        format: result.format,
+        folder: result.folder
       });
     } else {
       toast.error("Test upload failed", {
@@ -134,13 +149,13 @@ export const uploadTestFile = async (user: any): Promise<void> => {
     if (error instanceof Error) {
       const errorMsg = error.message;
       
-      if (errorMsg.includes("Failed to send a request")) {
-        toast.error("Edge Function connection failed", {
-          description: "Make sure your Supabase Edge Function is deployed correctly."
+      if (errorMsg.includes("Failed to fetch") || errorMsg.includes("send a request")) {
+        toast.error("Upload request failed", {
+          description: "Could not connect to Cloudinary API. Check your internet connection."
         });
       } else if (errorMsg.includes("Unauthorized") || errorMsg.includes("JWT")) {
         toast.error("Authentication error", {
-          description: "Your session may have expired. Please log out and log in again."
+          description: "Your authorization for Cloudinary is invalid."
         });
       } else if (errorMsg.includes("Missing Cloudinary credentials")) {
         toast.error("Cloudinary credentials missing", {

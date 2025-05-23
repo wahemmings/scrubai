@@ -32,7 +32,7 @@ export const getUploadSignature = async (user: any) => {
     
     if (error) {
       console.error("Edge function error:", error);
-      throw new Error(`Edge function error: ${error.message}`);
+      throw new Error(`Edge function error: ${error.message || JSON.stringify(error)}`);
     }
     
     if (!data) {
@@ -49,6 +49,7 @@ export const getUploadSignature = async (user: any) => {
     console.log("Upload signature received successfully:", {
       cloudName: data.cloudName,
       folder: data.folder,
+      uploadPreset: data.uploadPreset || 'scrubai_secure',
       timestamp: data.timestamp
     });
     return data;
@@ -89,7 +90,7 @@ export const secureUploadToCloudinary = async (file: File, signatureData: any) =
   console.log("Uploading to Cloudinary with params:", {
     cloudName,
     folder: signatureData.folder,
-    preset: signatureData.uploadPreset || 'not specified',
+    preset: signatureData.uploadPreset || 'scrubai_secure',
     publicId: signatureData.publicId || 'auto-generated'
   });
   
