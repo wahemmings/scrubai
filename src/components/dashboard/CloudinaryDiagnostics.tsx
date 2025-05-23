@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -6,13 +5,23 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { getCloudinaryConfig, isCloudinaryEnabled } from "@/integrations/cloudinary/config";
 import { diagnoseCloudinayConfiguration, testDirectCloudinaryAccess } from "@/integrations/cloudinary/diagnostics";
-import { testCloudinaryConnection, uploadTestFile } from "@/utils/cloudinary/testUpload";
+import { testCloudinaryConnection, uploadTestFile } from "@/utils/cloudinaryTest";
 
-export function CloudinaryDiagnostics({ user }: { user: any }) {
+export function CloudinaryDiagnostics() {
+  const [user, setUser] = useState<any>(null);
   const [diagnosisResult, setDiagnosisResult] = useState<any>(null);
   const [directTestResult, setDirectTestResult] = useState<any>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isDirectTestRunning, setIsDirectTestRunning] = useState(false);
+  
+  // Get the current user
+  useEffect(() => {
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    };
+    getUser();
+  }, []);
   
   // Get basic config info
   const config = getCloudinaryConfig();
@@ -66,6 +75,9 @@ export function CloudinaryDiagnostics({ user }: { user: any }) {
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div className="font-medium">Cloud Name:</div>
             <div>{config.cloudName || 'Not set'}</div>
+            
+            <div className="font-medium">API Key:</div>
+            <div>{config.apiKey ? '✅ Set' : '❌ Not set'}</div>
             
             <div className="font-medium">Upload Preset:</div>
             <div>{config.uploadPreset || 'Not set'}</div>
@@ -125,5 +137,3 @@ export function CloudinaryDiagnostics({ user }: { user: any }) {
     </Card>
   );
 }
-
-export default CloudinaryDiagnostics;
