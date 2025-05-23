@@ -28,14 +28,23 @@ console.log("Edge function environment check:", {
 
 // Generate a Cloudinary API signature
 function generateSignature(params: Record<string, string | number>, apiSecret: string): string {
+  // Sort the parameters alphabetically by key as required by Cloudinary
   const paramStr = Object.keys(params)
     .sort()
     .map(key => `${key}=${params[key]}`)
     .join('&');
   
-  return createHmac('sha256', apiSecret)
+  // Log the exact string being signed for debugging
+  console.log("String to sign:", paramStr);
+  
+  // Generate HMAC-SHA256 signature
+  const signature = createHmac('sha256', apiSecret)
     .update(paramStr)
     .digest('hex');
+  
+  console.log("Generated signature:", signature);
+  
+  return signature;
 }
 
 Deno.serve(async (req) => {
@@ -158,7 +167,11 @@ Deno.serve(async (req) => {
       const timestamp = Math.floor(Date.now() / 1000);
       const folder = `scrubai/${user.id}`; // User-specific folder for better organization
       
-      // Create parameters object for signature generation
+      // Log the incoming parameters for debugging
+      console.log("Request parameters:", { user_id, public_id, requestData });
+      
+      // Create parameters object for signature generation - IMPORTANT:
+      // This must include EXACTLY the same parameters that will be sent to Cloudinary
       const params: Record<string, string | number> = {
         timestamp,
         folder
@@ -169,7 +182,7 @@ Deno.serve(async (req) => {
         params.public_id = public_id;
       }
       
-      // Add upload preset if available
+      // CRITICAL: Always include the upload_preset in the signature if it will be used in the upload
       if (uploadPreset) {
         params.upload_preset = uploadPreset;
       }
