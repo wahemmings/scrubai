@@ -4,7 +4,8 @@ const config = {
   // Supabase configuration 
   supabase: {
     url: import.meta.env.VITE_SUPABASE_URL || "https://rysezrtqehpzonflkezr.supabase.co",
-    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5c2V6cnRxZWhwem9uZmxrZXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NTk0NTIsImV4cCI6MjA2MzQzNTQ1Mn0.iuoDyOtcRhK3CpN1Sf48WGP8Y1YPuSm0SYQ250e1xJE"
+    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5c2V6cnRxZWhwem9uZmxrZXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NTk0NTIsImV4cCI6MjA2MzQzNTQ1Mn0.iuoDyOtcRhK3CpN1Sf48WGP8Y1YPuSm0SYQ250e1xJE",
+    functionsUrl: import.meta.env.VITE_SUPABASE_FUNCTIONS_URL || "https://rysezrtqehpzonflkezr.supabase.co/functions/v1"
   },
   
   // Feature flags
@@ -19,8 +20,8 @@ const config = {
   // External services configuration
   externalServices: {
     cloudinary: {
-      cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "da7q81lrh", // Use your cloud name from env or default
-      uploadPreset: "scrubai_secure", // Add this line to ensure preset is accessible globally
+      cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "da7q81lrh", 
+      uploadPreset: "scrubai_secure", 
     },
     analytics: {
       posthogApiKey: import.meta.env.VITE_POSTHOG_API_KEY || "",
@@ -78,10 +79,11 @@ export const env = {
   // Supabase
   SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || "https://rysezrtqehpzonflkezr.supabase.co",
   SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5c2V6cnRxZWhwem9uZmxrZXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NTk0NTIsImV4cCI6MjA2MzQzNTQ1Mn0.iuoDyOtcRhK3CpN1Sf48WGP8Y1YPuSm0SYQ250e1xJE",
+  SUPABASE_FUNCTIONS_URL: import.meta.env.VITE_SUPABASE_FUNCTIONS_URL || "https://rysezrtqehpzonflkezr.supabase.co/functions/v1",
   
   // Cloudinary - client-side safe values only
   CLOUDINARY_CLOUD_NAME: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "da7q81lrh",
-  CLOUDINARY_UPLOAD_PRESET: "scrubai_secure", // Add this to ensure it's easily accessible
+  CLOUDINARY_UPLOAD_PRESET: "scrubai_secure", 
   
   // Analytics - client-side safe values only
   POSTHOG_API_KEY: import.meta.env.VITE_POSTHOG_API_KEY || "",
@@ -89,7 +91,7 @@ export const env = {
   SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN || "",
   
   // Feature flags - force enable Cloudinary for debugging
-  ENABLE_CLOUDINARY: true, // Force to true for debugging
+  ENABLE_CLOUDINARY: true, 
   ENABLE_WASM_PROCESSING: import.meta.env.VITE_ENABLE_WASM_PROCESSING === 'true' || true,
   ENABLE_ANALYTICS: import.meta.env.VITE_ENABLE_ANALYTICS === 'true' || false,
 };
@@ -99,7 +101,8 @@ console.log("App config initialized:", {
   cloudinaryEnabled: config.features.enableCloudinary,
   cloudName: config.externalServices.cloudinary.cloudName,
   uploadPreset: config.externalServices.cloudinary.uploadPreset,
-  supabaseUrl: config.supabase.url.substring(0, 15) + '...'
+  supabaseUrl: config.supabase.url.substring(0, 15) + '...',
+  supabaseFunctionsUrl: config.supabase.functionsUrl,
 });
 
 export default config;

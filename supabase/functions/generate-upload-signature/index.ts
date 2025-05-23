@@ -4,10 +4,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { v4 as uuid } from "https://esm.sh/uuid@9";
 import { createHash, createHmac } from "https://deno.land/std@0.167.0/node/crypto.ts";
 
-// Set up CORS headers for browser requests
+// Expanded CORS headers for better browser compatibility
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-requested-with, accept, origin',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Max-Age': '86400',
 };
 
 // Create a Supabase client for checking authentication
@@ -40,18 +42,21 @@ function generateSignature(params: Record<string, string | number>, apiSecret: s
 Deno.serve(async (req) => {
   console.log("Edge function called: generate-upload-signature");
   
-  // Handle CORS preflight requests
+  // Handle CORS preflight requests with extended headers
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
   
   try {
-    // Get authorization token and verify user
+    // Get authorization token and verify user with detailed logging
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       console.error("No authorization header provided");
       return new Response(
-        JSON.stringify({ error: 'No authorization header provided' }),
+        JSON.stringify({ 
+          error: 'No authorization header provided',
+          hint: 'Make sure to include a valid Bearer token in the Authorization header'
+        }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -70,7 +75,11 @@ Deno.serve(async (req) => {
     if (authError || !user) {
       console.error("Authentication error:", authError);
       return new Response(
-        JSON.stringify({ error: 'Unauthorized', details: authError?.message }),
+        JSON.stringify({ 
+          error: 'Unauthorized', 
+          details: authError?.message,
+          hint: 'The token provided might be expired or invalid'
+        }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -107,7 +116,8 @@ Deno.serve(async (req) => {
             cloudName: !cloudName,
             apiKey: !apiKey,
             apiSecret: !apiSecret
-          }
+          },
+          hint: 'Make sure CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET are set in Supabase secrets'
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );

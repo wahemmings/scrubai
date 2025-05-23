@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import config from "@/config";
 
 // Get secure upload signature from Supabase edge function
 export const getUploadSignature = async (user: any) => {
@@ -28,18 +29,60 @@ export const getUploadSignature = async (user: any) => {
       access_token_length: session?.access_token ? session.access_token.length : 0
     });
     
-    // Improved error handling with explicit options
-    const { data, error } = await supabase.functions.invoke('generate-upload-signature', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`
-      },
-      body: JSON.stringify({ 
-        user_id: user.id,
-        timestamp: Math.floor(Date.now() / 1000) // Add timestamp to request
-      })
-    });
+    let response;
+    let data;
+    let error;
+    
+    try {
+      // Try using the Supabase client first
+      console.log("Using supabase.functions.invoke method");
+      const result = await supabase.functions.invoke('generate-upload-signature', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ 
+          user_id: user.id,
+          timestamp: Math.floor(Date.now() / 1000) // Add timestamp to request
+        })
+      });
+      
+      data = result.data;
+      error = result.error;
+    } catch (invokeError) {
+      console.warn("Error using supabase.functions.invoke:", invokeError);
+      console.log("Falling back to direct fetch method");
+      
+      // If the client method fails, try direct fetch as backup
+      const supabaseFunctionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL || 
+                                  `${config.supabase.url}/functions/v1`;
+      
+      const directUrl = `${supabaseFunctionsUrl}/generate-upload-signature`;
+      
+      console.log("Calling edge function directly at:", directUrl);
+      
+      // Make direct fetch request to the edge function
+      response = await fetch(directUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ 
+          user_id: user.id,
+          timestamp: Math.floor(Date.now() / 1000)
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Direct fetch error:", errorText);
+        throw new Error(`Edge function direct fetch failed: ${response.status} ${response.statusText}`);
+      }
+      
+      data = await response.json();
+    }
     
     console.log("Edge function response received", { 
       hasData: !!data, 
@@ -112,13 +155,22 @@ export const secureUploadToCloudinary = async (file: File, signatureData: any) =
   });
   
   try {
-    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+    console.log("Uploading to Cloudinary URL:", uploadUrl);
+    
+    const response = await fetch(uploadUrl, {
       method: 'POST',
       body: formData,
     });
     
     if (!response.ok) {
-      const errorData = await response.json();
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        errorData = { message: await response.text() };
+      }
+      
       console.error("Cloudinary upload failed:", errorData);
       throw new Error(`Upload failed: ${errorData.error?.message || response.statusText}`);
     }
