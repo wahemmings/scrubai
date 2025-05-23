@@ -35,7 +35,10 @@ export const getUploadSignature = async (user: any) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${session.access_token}`
       },
-      body: JSON.stringify({ user_id: user.id })
+      body: JSON.stringify({ 
+        user_id: user.id,
+        timestamp: Math.floor(Date.now() / 1000) // Add timestamp to request
+      })
     });
     
     console.log("Edge function response received", { 

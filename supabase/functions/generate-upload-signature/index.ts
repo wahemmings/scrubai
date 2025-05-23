@@ -113,6 +113,18 @@ Deno.serve(async (req) => {
       );
     }
     
+    // Get request data
+    let reqData = {};
+    try {
+      reqData = await req.json();
+      console.log("Request body parsed successfully:", {
+        hasUserId: !!reqData?.user_id,
+        requestTimestamp: reqData?.timestamp || 'not provided'
+      });
+    } catch (e) {
+      console.log("No request body or invalid JSON");
+    }
+    
     // Generate parameters for Cloudinary upload
     const timestamp = Math.floor(Date.now() / 1000);
     const userId = user.id;
