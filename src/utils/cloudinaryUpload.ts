@@ -84,12 +84,25 @@ export const getUploadSignature = async (user: any, options: any = {}) => {
       
       // Check if the response contains the expected fields
       // Note: Edge function returns 'api_key' (Cloudinary standard), but we also support 'apiKey' for backward compatibility
+      console.group("🔍 Validating Signature Response");
+      console.log("Response Data:", responseData);
+      console.log("Validation Checks:", {
+        hasSignature: !!responseData.signature,
+        hasCloudName: !!responseData.cloudName,
+        hasApiKey: !!responseData.apiKey,
+        hasApi_key: !!responseData.api_key,
+        apiKeyValidation: (!responseData.api_key && !responseData.apiKey) ? "FAILED" : "PASSED"
+      });
+      
       if (!responseData.signature || !responseData.cloudName || (!responseData.api_key && !responseData.apiKey)) {
-        console.error("Invalid signature data structure:", responseData);
+        console.error("❌ Invalid signature data structure:", responseData);
         console.error("Expected: signature, cloudName, and either api_key or apiKey");
         console.error("Received keys:", Object.keys(responseData));
+        console.groupEnd();
         throw new Error("Invalid signature data structure returned from edge function");
       }
+      console.log("✅ Signature validation passed");
+      console.groupEnd();
       
       console.log("Upload signature received successfully:", {
         cloudName: responseData.cloudName,

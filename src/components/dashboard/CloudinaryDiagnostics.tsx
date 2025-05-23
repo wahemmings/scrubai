@@ -7,6 +7,7 @@ import { getCloudinaryConfig, isCloudinaryEnabled } from "@/integrations/cloudin
 import { diagnoseCloudinayConfiguration, testDirectCloudinaryAccess } from "@/integrations/cloudinary/diagnostics";
 import { testCloudinaryConnection, uploadTestFile } from "@/utils/cloudinaryTest";
 import { testSignatureGeneration } from "@/utils/cloudinary/signatureTest";
+import { fullCloudinaryDiagnostics } from "@/utils/cloudinary/fullDiagnostics";
 
 interface CloudinaryDiagnosticsProps {
   user?: any;
@@ -17,9 +18,11 @@ export function CloudinaryDiagnostics({ user: initialUser }: CloudinaryDiagnosti
   const [diagnosisResult, setDiagnosisResult] = useState<any>(null);
   const [directTestResult, setDirectTestResult] = useState<any>(null);
   const [signatureTestResult, setSignatureTestResult] = useState<any>(null);
+  const [fullDiagnosticsResult, setFullDiagnosticsResult] = useState<any>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isDirectTestRunning, setIsDirectTestRunning] = useState(false);
   const [isSignatureTestRunning, setIsSignatureTestRunning] = useState(false);
+  const [isFullDiagnosticsRunning, setIsFullDiagnosticsRunning] = useState(false);
   
   // Get the current user if not provided as prop
   useEffect(() => {
@@ -85,6 +88,23 @@ export function CloudinaryDiagnostics({ user: initialUser }: CloudinaryDiagnosti
   const runUploadTest = async () => {
     if (user) {
       await uploadTestFile(user);
+    }
+  };
+  
+  const runFullDiagnostics = async () => {
+    if (!user) return;
+    
+    setIsFullDiagnosticsRunning(true);
+    try {
+      const result = await fullCloudinaryDiagnostics(user);
+      setFullDiagnosticsResult(result);
+    } catch (error) {
+      setFullDiagnosticsResult({ 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: Date.now()
+      });
+    } finally {
+      setIsFullDiagnosticsRunning(false);
     }
   };
 
@@ -154,6 +174,50 @@ export function CloudinaryDiagnostics({ user: initialUser }: CloudinaryDiagnosti
             </AlertDescription>
           </Alert>
         )}
+
+        {fullDiagnosticsResult && (
+          <Alert className={fullDiagnosticsResult.success ? 'bg-blue-50' : 'bg-red-50'}>
+            <AlertTitle>
+              Advanced Diagnostics Results
+            </AlertTitle>
+            <AlertDescription>
+              <div className="mt-2 space-y-2">
+                {fullDiagnosticsResult.success ? (
+                  <>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="font-medium">Client Config:</div>
+                      <div>{fullDiagnosticsResult.clientConfig?.cloudName !== "MISSING" ? '✅ OK' : '❌ Missing'}</div>
+                      
+                      <div className="font-medium">Authentication:</div>
+                      <div>{fullDiagnosticsResult.authStatus?.authenticated ? '✅ OK' : '❌ Failed'}</div>
+                      
+                      <div className="font-medium">Edge Function:</div>
+                      <div>{fullDiagnosticsResult.edgeFunction?.status === 200 ? '✅ Responded' : '❌ Failed'}</div>
+                      
+                      <div className="font-medium">api_key Present:</div>
+                      <div>{fullDiagnosticsResult.validation?.api_keyPresent ? '✅ Yes' : '❌ No'}</div>
+                      
+                      <div className="font-medium">apiKey Present:</div>
+                      <div>{fullDiagnosticsResult.validation?.apiKeyPresent ? '✅ Yes' : '❌ No'}</div>
+                      
+                      <div className="font-medium">Validation Result:</div>
+                      <div>{fullDiagnosticsResult.validation?.newValidation ? '✅ Passes' : '❌ Fails'}</div>
+                    </div>
+                    
+                    <h4 className="font-medium mt-2">Response Structure:</h4>
+                    <pre className="w-full overflow-auto text-xs p-2 rounded bg-slate-100">
+                      {JSON.stringify(fullDiagnosticsResult.rawResponse, null, 2)}
+                    </pre>
+                  </>
+                ) : (
+                  <pre className="w-full overflow-auto text-xs p-2 rounded bg-slate-100">
+                    {JSON.stringify(fullDiagnosticsResult, null, 2)}
+                  </pre>
+                )}
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
       </CardContent>
       
       <CardFooter className="flex flex-wrap gap-3">
@@ -175,6 +239,10 @@ export function CloudinaryDiagnostics({ user: initialUser }: CloudinaryDiagnosti
         
         <Button variant="secondary" onClick={runUploadTest} disabled={!user}>
           Test Upload
+        </Button>
+        
+        <Button variant="destructive" onClick={runFullDiagnostics} disabled={!user || isFullDiagnosticsRunning}>
+          {isFullDiagnosticsRunning ? 'Running Advanced Diagnostics...' : 'Run Advanced Diagnostics'}
         </Button>
       </CardFooter>
     </Card>
