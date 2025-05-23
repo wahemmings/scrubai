@@ -3,8 +3,9 @@
 export * from './uploadSignature';
 export * from './fileUpload';
 export * from './serverUpload';
-export * from './testConnection';
 export * from './testUpload';
 
 // Re-export for backward compatibility
 export { uploadToServer } from './serverUpload';
+export { testCloudinaryConnection as testConnection } from './testUpload';
+

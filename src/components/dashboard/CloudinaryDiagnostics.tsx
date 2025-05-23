@@ -8,21 +8,11 @@ import { getCloudinaryConfig, isCloudinaryEnabled } from "@/integrations/cloudin
 import { diagnoseCloudinayConfiguration, testDirectCloudinaryAccess } from "@/integrations/cloudinary/diagnostics";
 import { testCloudinaryConnection, uploadTestFile } from "@/utils/cloudinary/testUpload";
 
-export function CloudinaryDiagnostics() {
-  const [user, setUser] = useState<any>(null);
+export function CloudinaryDiagnostics({ user }: { user: any }) {
   const [diagnosisResult, setDiagnosisResult] = useState<any>(null);
   const [directTestResult, setDirectTestResult] = useState<any>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isDirectTestRunning, setIsDirectTestRunning] = useState(false);
-  
-  // Get the current user
-  useEffect(() => {
-    const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
-    };
-    getUser();
-  }, []);
   
   // Get basic config info
   const config = getCloudinaryConfig();
@@ -135,3 +125,5 @@ export function CloudinaryDiagnostics() {
     </Card>
   );
 }
+
+export default CloudinaryDiagnostics;
