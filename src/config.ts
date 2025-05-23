@@ -20,6 +20,7 @@ const config = {
   externalServices: {
     cloudinary: {
       cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "da7q81lrh", // Use your cloud name from env or default
+      uploadPreset: "scrubai_secure", // Add this line to ensure preset is accessible globally
     },
     analytics: {
       posthogApiKey: import.meta.env.VITE_POSTHOG_API_KEY || "",
@@ -80,6 +81,7 @@ export const env = {
   
   // Cloudinary - client-side safe values only
   CLOUDINARY_CLOUD_NAME: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "da7q81lrh",
+  CLOUDINARY_UPLOAD_PRESET: "scrubai_secure", // Add this to ensure it's easily accessible
   
   // Analytics - client-side safe values only
   POSTHOG_API_KEY: import.meta.env.VITE_POSTHOG_API_KEY || "",
@@ -96,6 +98,7 @@ export const env = {
 console.log("App config initialized:", {
   cloudinaryEnabled: config.features.enableCloudinary,
   cloudName: config.externalServices.cloudinary.cloudName,
+  uploadPreset: config.externalServices.cloudinary.uploadPreset,
   supabaseUrl: config.supabase.url.substring(0, 15) + '...'
 });
 

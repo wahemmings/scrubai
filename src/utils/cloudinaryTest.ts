@@ -1,17 +1,19 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { getUploadSignature, secureUploadToCloudinary } from "@/utils/cloudinaryUpload";
-import { isCloudinaryEnabled } from "@/integrations/cloudinary/config";
+import { isCloudinaryEnabled, getCloudinaryConfig } from "@/integrations/cloudinary/config";
 import { toast } from "sonner";
 
 // Function to test Cloudinary connection
 export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
   // Force enabled for testing
   console.log("Starting Cloudinary connection test...");
+  const config = getCloudinaryConfig();
   console.log("Environment check:", {
-    cloudinaryEnabled: isCloudinaryEnabled(),
-    userAuthenticated: !!user,
-    cloudNameInEnv: !!import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+    cloudinaryEnabled: config.enabled,
+    cloudName: config.cloudName,
+    uploadPreset: config.uploadPreset,
+    userAuthenticated: !!user
   });
   
   if (!isCloudinaryEnabled()) {
@@ -59,9 +61,7 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
       console.error("Auth check failed:", authError);
     }
     
-    // Log the full request attempt
-    console.log("Calling edge function with path:", 'generate-upload-signature');
-    
+    // Test with detailed error handling
     const signatureData = await getUploadSignature(user);
     
     if (!signatureData || !signatureData.signature) {

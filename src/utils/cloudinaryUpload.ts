@@ -19,7 +19,6 @@ export const getUploadSignature = async (user: any) => {
     
     // Add detailed logging for edge function call
     console.log("Calling generate-upload-signature edge function");
-    console.log("Full edge function path:", `${supabase.functions.url}/generate-upload-signature`);
     
     // More detailed request logging
     console.log("Request details:", {
