@@ -11,10 +11,14 @@ export const secureUploadToCloudinary = async (file: File, signatureData: any) =
   formData.append('api_key', signatureData.apiKey);
   formData.append('timestamp', signatureData.timestamp.toString());
   formData.append('signature', signatureData.signature);
+  
+  // IMPORTANT FIX: Use folder from signature data, don't override it
   formData.append('folder', signatureData.folder);
   
   // These fields are only added if they exist in the signature data
+  // IMPORTANT FIX: Use publicId instead of public_id to match what's in the signature
   if (signatureData.publicId) {
+    console.log("Using public_id:", signatureData.publicId);
     formData.append('public_id', signatureData.publicId);
   }
   
@@ -29,20 +33,15 @@ export const secureUploadToCloudinary = async (file: File, signatureData: any) =
     throw new Error("Cloud name is missing in signature data");
   }
   
-  console.log("Preparing Cloudinary upload with:", {
-    cloudName,
-    apiKeyProvided: !!signatureData.apiKey,
-    signatureProvided: !!signatureData.signature,
-    uploadPreset: signatureData.uploadPreset || 'default',
-    fileName: file.name,
-    fileSize: file.size
-  });
-  
-  console.log("Uploading to Cloudinary with params:", {
-    cloudName,
+  // Add detailed logging for better debugging
+  console.log("Cloudinary upload request:", {
+    cloudName: cloudName,
+    hasAPIKey: !!signatureData.apiKey,
+    hasSignature: !!signatureData.signature,
+    timestamp: signatureData.timestamp,
     folder: signatureData.folder,
-    preset: signatureData.uploadPreset || 'scrubai_secure',
-    publicId: signatureData.publicId || 'auto-generated'
+    publicId: signatureData.publicId || 'auto-generated',
+    uploadPreset: signatureData.uploadPreset || 'default'
   });
   
   try {

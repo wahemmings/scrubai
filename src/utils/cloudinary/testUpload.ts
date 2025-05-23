@@ -63,10 +63,22 @@ export const uploadTestFile = async (user: any) => {
     
     // Add a unique test identifier
     const testId = `test_${Date.now().toString(36)}`;
-    signatureData.publicId = `${signatureData.folder}/test/${testId}`;
     
-    // Upload the test file
-    const result = await secureUploadToCloudinary(testFile, signatureData);
+    // IMPORTANT FIX: We need to update the public_id parameter WITHOUT modifying the signature data object
+    // This ensures the public_id used in the upload matches exactly what was signed
+    const uploadParams = {
+      ...signatureData,
+      publicId: `${signatureData.folder}/test/${testId}`
+    };
+    
+    console.log("Test upload params:", {
+      folder: uploadParams.folder,
+      publicId: uploadParams.publicId,
+      timestamp: uploadParams.timestamp
+    });
+    
+    // Upload the test file with the correct parameters
+    const result = await secureUploadToCloudinary(testFile, uploadParams);
     
     toast.success('Test upload successful', {
       description: 'The test file was successfully uploaded'

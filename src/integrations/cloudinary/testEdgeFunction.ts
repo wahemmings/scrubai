@@ -2,88 +2,115 @@
 import { supabase } from "@/integrations/supabase/client";
 import config from "@/config";
 
-// Test edge function with Supabase client
+// Test the edge function with the client
 export const testEdgeFunctionClient = async (user: any): Promise<any> => {
+  if (!user) {
+    return {
+      success: false,
+      error: "Authentication required"
+    };
+  }
+  
   try {
-    if (!user) {
-      throw new Error("User is required for edge function test");
-    }
+    console.log("Testing edge function with client...");
     
+    // Check that the user has a valid session token
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) {
       throw new Error("No valid session token found");
     }
     
-    // Test the edge function with a test mode flag
+    // Call the edge function in test mode
     const { data, error } = await supabase.functions.invoke('generate-upload-signature', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${session.access_token}`
       },
-      body: JSON.stringify({ 
+      body: { 
         user_id: user.id,
-        test_mode: true
-      })
+        test_mode: true 
+      }
     });
     
     if (error) {
       console.error("Edge function test error:", error);
-      return { success: false, error: error.message };
+      return {
+        success: false,
+        error: error.message || JSON.stringify(error),
+      };
     }
     
-    return { success: true, data };
+    console.log("Edge function test response:", data);
+    return {
+      success: true,
+      data
+    };
   } catch (error) {
     console.error("Edge function test error:", error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Unknown error" 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error"
     };
   }
 };
 
-// Test edge function with direct fetch
+// Test the edge function with direct REST call
 export const testEdgeFunctionDirect = async (user: any): Promise<any> => {
+  if (!user) {
+    return {
+      success: false,
+      error: "Authentication required"
+    };
+  }
+  
   try {
-    if (!user) {
-      throw new Error("User is required for edge function test");
-    }
+    console.log("Testing edge function with direct call...");
     
+    // Check that the user has a valid session token
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) {
       throw new Error("No valid session token found");
     }
     
-    const functionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL || 
-                       `${config.supabase.url}/functions/v1`;
+    // Get the function URL
+    const functionUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL || 
+                         `${config.supabase.functionsUrl}`;
     
-    const response = await fetch(`${functionsUrl}/generate-upload-signature`, {
+    if (!functionUrl) {
+      throw new Error("Supabase functions URL is not configured");
+    }
+    
+    // Call the edge function directly
+    const response = await fetch(`${functionUrl}/generate-upload-signature`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`
+        'Authorization': `Bearer ${session.access_token}`,
+        'Origin': window.location.origin
       },
       body: JSON.stringify({ 
         user_id: user.id,
-        test_mode: true
+        test_mode: true 
       })
     });
     
     if (!response.ok) {
       const errorText = await response.text();
-      return { 
-        success: false, 
-        error: `Edge function direct fetch failed: ${response.status} ${errorText}` 
-      };
+      throw new Error(`Edge function direct call failed: ${response.status} ${errorText || response.statusText}`);
     }
     
     const data = await response.json();
-    return { success: true, data };
+    console.log("Edge function direct test response:", data);
+    return {
+      success: true,
+      data
+    };
   } catch (error) {
-    console.error("Direct edge function test error:", error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Unknown error" 
+    console.error("Edge function direct test error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error"
     };
   }
 };
