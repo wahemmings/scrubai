@@ -82,10 +82,24 @@ export const getUploadSignature = async (user: any, options: any = {}) => {
         responseData = data;
       }
       
+      // FIX B: Normalize parameter names to handle inconsistencies from the edge function
+      // This ensures all needed parameters are available regardless of naming convention
+      responseData = {
+        ...responseData,
+        // Handle cloud name variations
+        cloudName: responseData.cloudName || responseData.cloud_name || responseData.cloudname,
+        // Handle API key variations
+        apiKey: responseData.apiKey || responseData.api_key,
+        api_key: responseData.api_key || responseData.apiKey,
+        // Handle upload preset variations
+        upload_preset: responseData.upload_preset || responseData.uploadPreset,
+        uploadPreset: responseData.uploadPreset || responseData.upload_preset,
+      };
+      
       // Check if the response contains the expected fields
       // Note: Edge function returns 'api_key' (Cloudinary standard), but we also support 'apiKey' for backward compatibility
       console.group("🔍 Validating Signature Response");
-      console.log("Response Data:", responseData);
+      console.log("Response Data AFTER normalization:", responseData);
       console.log("Validation Checks:", {
         hasSignature: !!responseData.signature,
         hasCloudName: !!responseData.cloudName,
@@ -93,6 +107,7 @@ export const getUploadSignature = async (user: any, options: any = {}) => {
         hasApi_key: !!responseData.api_key,
         apiKeyValidation: (!responseData.api_key && !responseData.apiKey) ? "FAILED" : "PASSED"
       });
+      console.log("Available parameter names:", Object.keys(responseData));
       
       if (!responseData.signature || !responseData.cloudName || (!responseData.api_key && !responseData.apiKey)) {
         console.error("❌ Invalid signature data structure:", responseData);
@@ -125,9 +140,25 @@ export const getUploadSignature = async (user: any, options: any = {}) => {
 
 // Secure file upload to Cloudinary
 export const secureUploadToCloudinary = async (file: File, signatureData: any) => {
-  if (!signatureData || !signatureData.signature) {
-    console.error("Missing signature data:", signatureData);
-    throw new Error("Invalid signature data");
+  console.group("🚀 Cloudinary Upload Process");
+  console.log("Starting secure upload to Cloudinary");
+  
+  // First, normalize the signature data to ensure all required parameters exist
+  const normalizedSignatureData = {
+    ...signatureData,
+    api_key: signatureData.api_key || signatureData.apiKey,
+    apiKey: signatureData.apiKey || signatureData.api_key,
+    cloudName: signatureData.cloudName || signatureData.cloud_name || signatureData.cloudname,
+    upload_preset: signatureData.upload_preset || signatureData.uploadPreset,
+    uploadPreset: signatureData.uploadPreset || signatureData.upload_preset,
+  };
+  
+  console.log("Normalized signature data:", normalizedSignatureData);
+  
+  if (!normalizedSignatureData.signature) {
+    console.error("Missing signature in data:", normalizedSignatureData);
+    console.groupEnd();
+    throw new Error("Invalid signature data: Missing signature");
   }
   
   const formData = new FormData();
@@ -135,47 +166,58 @@ export const secureUploadToCloudinary = async (file: File, signatureData: any) =
   
   // CRITICAL: Must use the exact parameter names that Cloudinary expects
   // Use api_key directly if available, otherwise fall back to apiKey for backward compatibility
-  formData.append('api_key', signatureData.api_key || signatureData.apiKey);
-  formData.append('timestamp', signatureData.timestamp.toString());
-  formData.append('signature', signatureData.signature);
-  formData.append('folder', signatureData.folder);
+  formData.append('api_key', normalizedSignatureData.api_key);
+  formData.append('timestamp', normalizedSignatureData.timestamp.toString());
+  formData.append('signature', normalizedSignatureData.signature);
+  
+  // Only append folder if it exists
+  if (normalizedSignatureData.folder) {
+    formData.append('folder', normalizedSignatureData.folder);
+  }
+  
+  console.log("FormData prepared with parameters:", {
+    api_key: normalizedSignatureData.api_key ? 'PRESENT' : 'MISSING',
+    timestamp: normalizedSignatureData.timestamp ? 'PRESENT' : 'MISSING',
+    signature: normalizedSignatureData.signature ? 'PRESENT' : 'MISSING',
+    folder: normalizedSignatureData.folder ? 'PRESENT' : 'MISSING'
+  });
   
   // These fields are only added if they exist in the signature data
   // IMPORTANT: We try the correct parameter name first, then fall back to the legacy one
   // for backward compatibility
-  if (signatureData.public_id || signatureData.publicId) {
-    const publicId = signatureData.public_id || signatureData.publicId;
+  if (normalizedSignatureData.public_id || normalizedSignatureData.publicId) {
+    const publicId = normalizedSignatureData.public_id || normalizedSignatureData.publicId;
     formData.append('public_id', publicId);
     console.log("Added public_id to upload:", publicId);
   }
   
-  if (signatureData.upload_preset || signatureData.uploadPreset) {
-    const uploadPreset = signatureData.upload_preset || signatureData.uploadPreset;
-    formData.append('upload_preset', uploadPreset);
-    console.log("Added upload_preset to upload:", uploadPreset);
+  if (normalizedSignatureData.upload_preset) {
+    formData.append('upload_preset', normalizedSignatureData.upload_preset);
+    console.log("Added upload_preset to upload:", normalizedSignatureData.upload_preset);
   }
   
-  const cloudName = signatureData.cloudName;
+  const cloudName = normalizedSignatureData.cloudName;
   
   if (!cloudName) {
-    console.error("Cloud name missing from signature data:", signatureData);
+    console.error("Cloud name missing from signature data:", normalizedSignatureData);
+    console.groupEnd();
     throw new Error("Cloud name is missing in signature data");
   }
   
   console.log("Preparing Cloudinary upload with:", {
     cloudName,
-    apiKeyProvided: !!signatureData.apiKey,
-    signatureProvided: !!signatureData.signature,
-    uploadPreset: signatureData.uploadPreset || 'default',
+    apiKeyProvided: !!normalizedSignatureData.api_key,
+    signatureProvided: !!normalizedSignatureData.signature,
+    uploadPreset: normalizedSignatureData.upload_preset || 'default',
     fileName: file.name,
     fileSize: file.size
   });
   
   console.log("Uploading to Cloudinary with params:", {
     cloudName,
-    folder: signatureData.folder,
-    preset: signatureData.uploadPreset || 'scrubai_secure',
-    publicId: signatureData.publicId || 'auto-generated'
+    folder: normalizedSignatureData.folder,
+    preset: normalizedSignatureData.upload_preset || 'scrubai_secure',
+    publicId: normalizedSignatureData.public_id || normalizedSignatureData.publicId || 'auto-generated'
   });
   
   try {
@@ -196,9 +238,11 @@ export const secureUploadToCloudinary = async (file: File, signatureData: any) =
       url: result.secure_url,
       format: result.format
     });
+    console.groupEnd();
     return result;
   } catch (error) {
     console.error("Cloudinary upload error:", error);
+    console.groupEnd();
     throw error;
   }
 };
