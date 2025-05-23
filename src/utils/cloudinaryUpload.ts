@@ -27,10 +27,12 @@ export const getUploadSignature = async (user: any) => {
       has_access_token: !!session?.access_token?.substring(0, 10) + '...'
     });
     
+    // Improved error handling with explicit options
     const { data, error } = await supabase.functions.invoke('generate-upload-signature', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
       },
       body: JSON.stringify({ user_id: user.id })
     });

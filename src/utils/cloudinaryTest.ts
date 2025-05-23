@@ -36,7 +36,7 @@ export const testCloudinaryConnection = async (user: any): Promise<boolean> => {
     
     // Get current auth session to verify token
     const { data: { session } } = await supabase.auth.getSession();
-    console.log("Auth session available:", !!session);
+    console.log("Auth session available:", !!session, "Token length:", session?.access_token ? session.access_token.length : 0);
     
     if (!session) {
       toast("No active session found", {
