@@ -2,16 +2,30 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
+import { FileText, Plus, Search, Filter, Trash2, Check, Upload, Wrench } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import FileUploader from "@/components/dashboard/FileUploader";
 import { testCloudinaryConnection, uploadTestFile } from "@/utils/cloudinaryTest";
 import { isCloudinaryEnabled } from "@/integrations/cloudinary/config";
-import DocumentGrid from "@/components/documents/DocumentGrid";
-import DocumentToolbar from "@/components/documents/DocumentToolbar";
-import DocumentSearch from "@/components/documents/DocumentSearch";
-import CloudinaryTestDialog from "@/components/documents/CloudinaryTestDialog";
-import UploadDialog from "@/components/documents/UploadDialog";
+import CloudinaryDocumentCard from "@/components/dashboard/CloudinaryDocumentCard";
+import { CloudinaryDiagnostics } from "@/components/dashboard/CloudinaryDiagnostics";
 
 interface Document {
   id: number;
@@ -32,7 +46,6 @@ const Documents = () => {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [testDialogOpen, setTestDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   
   // Debug logging to check if Cloudinary is enabled
   useEffect(() => {
@@ -143,13 +156,6 @@ const Documents = () => {
     await uploadTestFile(user);
   };
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    // In a real app, you would filter the documents based on the query
-    // For now, we'll just log it
-    console.log("Search query:", query);
-  };
-
   // Force Cloudinary to be enabled for testing purposes
   const cloudinaryEnabled = true; // This guarantees the button will show up
 
@@ -160,34 +166,118 @@ const Documents = () => {
         <div className="container py-6">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold">Documents</h1>
-            <DocumentToolbar 
-              isSelectionMode={isSelectionMode}
-              selectedCount={selectedDocuments.length}
-              onSelectAll={handleSelectAll}
-              onToggleSelectionMode={toggleSelectionMode}
-              onDeleteSelected={deleteSelected}
-              onTestCloudinary={() => setTestDialogOpen(true)}
-              onUploadClick={() => setUploadDialogOpen(true)}
-              allSelected={selectedDocuments.length === documents.length}
-            />
+            <div className="flex gap-2">
+              {isSelectionMode ? (
+                <>
+                  <Button variant="outline" onClick={handleSelectAll}>
+                    {selectedDocuments.length === documents.length ? "Deselect All" : "Select All"}
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="destructive" 
+                        disabled={selectedDocuments.length === 0}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete ({selectedDocuments.length})
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete {selectedDocuments.length} selected document(s).
+                          This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={deleteSelected}>Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <Button variant="outline" onClick={toggleSelectionMode}>
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" onClick={toggleSelectionMode}>
+                    Select
+                  </Button>
+                  {/* Always show the Test Cloudinary button for now */}
+                  <Button 
+                    variant="outline" 
+                    className="gap-2"
+                    onClick={() => setTestDialogOpen(true)}
+                  >
+                    <Wrench className="h-4 w-4" />
+                    Test Cloudinary
+                  </Button>
+                  <Button onClick={() => setUploadDialogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Upload Document
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Document upload dialog */}
-          <UploadDialog 
-            open={uploadDialogOpen}
-            onOpenChange={setUploadDialogOpen}
-            onFileUploaded={handleFileUploaded}
-          />
+          <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Upload Document</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <FileUploader 
+                  type="document" 
+                  onFileUploaded={handleFileUploaded} 
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Cloudinary test dialog */}
-          <CloudinaryTestDialog 
-            open={testDialogOpen}
-            onOpenChange={setTestDialogOpen}
-            onTestConnection={handleTestCloudinary}
-            onUploadTestFile={handleUploadTestFile}
-            cloudinaryEnabled={cloudinaryEnabled}
-            user={user}
-          />
+          <Dialog open={testDialogOpen} onOpenChange={setTestDialogOpen}>
+            <DialogContent className="sm:max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Cloudinary Integration</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <Tabs defaultValue="diagnostics" className="w-full">
+                  <TabsList>
+                    <TabsTrigger value="basic">Basic Tests</TabsTrigger>
+                    <TabsTrigger value="diagnostics">Advanced Diagnostics</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="basic">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Test your Cloudinary integration with these basic options:
+                    </p>
+                    <div className="flex flex-col gap-4">
+                      <Button onClick={handleTestCloudinary}>
+                        Test Connection
+                      </Button>
+                      <Button variant="outline" onClick={handleUploadTestFile}>
+                        Upload Test File
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-4">
+                      Cloudinary Status: {cloudinaryEnabled ? 
+                        <span className="text-green-500 font-medium">Enabled</span> : 
+                        <span className="text-red-500 font-medium">Disabled</span>
+                      }
+                    </p>
+                  </TabsContent>
+                  
+                  <TabsContent value="diagnostics">
+                    <CloudinaryDiagnostics />
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Tabs defaultValue="all" className="w-full">
             <TabsList className="mb-4">
@@ -198,19 +288,101 @@ const Documents = () => {
             </TabsList>
             
             <div className="flex items-center justify-between mb-4">
-              <DocumentSearch onSearch={handleSearch} />
+              <div className="relative">
+                <Input 
+                  placeholder="Search documents..." 
+                  className="pl-8 w-[300px]"
+                />
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              </div>
+              <Button variant="outline" size="icon">
+                <Filter className="h-4 w-4" />
+              </Button>
             </div>
 
             <TabsContent value="all">
-              <DocumentGrid 
-                isLoading={isLoading}
-                documents={documents}
-                isSelectionMode={isSelectionMode}
-                selectedDocuments={selectedDocuments}
-                onToggleSelection={toggleSelection}
-                onDeleteDocument={deleteDocument}
-                onUploadClick={() => setUploadDialogOpen(true)}
-              />
+              {isLoading ? (
+                <div className="flex justify-center my-12">
+                  <p>Loading documents...</p>
+                </div>
+              ) : documents.length > 0 ? (
+                <div className="grid gap-4 md:grid-cols-3">
+                  {documents.map(doc => (
+                    doc.contentPath ? (
+                      <CloudinaryDocumentCard
+                        key={doc.id}
+                        document={doc}
+                        isSelectable={isSelectionMode}
+                        isSelected={selectedDocuments.includes(doc.id)}
+                      />
+                    ) : (
+                      <Card 
+                        key={doc.id} 
+                        className={`cursor-pointer ${isSelectionMode ? 'relative' : ''} hover:bg-accent/50 transition-colors`}
+                      >
+                        <CardContent className="pt-6">
+                          {isSelectionMode && (
+                            <div className="absolute top-2 left-2">
+                              <Checkbox 
+                                checked={selectedDocuments.includes(doc.id)}
+                                onCheckedChange={() => toggleSelection(doc.id)}
+                                aria-label={`Select ${doc.name}`}
+                              />
+                            </div>
+                          )}
+                          <div className="flex items-center justify-center h-20 w-20 bg-primary/10 rounded mx-auto mb-4">
+                            <FileText className="h-10 w-10 text-primary" />
+                          </div>
+                          <h3 className="font-medium text-center">{doc.name}</h3>
+                          <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                            <span>{doc.type}</span>
+                            <span>{doc.size}</span>
+                          </div>
+                          <p className="text-xs text-center text-muted-foreground mt-2">
+                            Last modified: {doc.lastModified}
+                          </p>
+                          
+                          {!isSelectionMode && (
+                            <div className="mt-4 flex justify-end">
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete document?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete "{doc.name}"? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => deleteDocument(doc.id)}>Delete</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )
+                  ))}
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No documents yet</h3>
+                    <p className="text-muted-foreground mb-6">Upload your first document to get started</p>
+                    <Button onClick={() => setUploadDialogOpen(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Upload Document
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
             
             {/* Other tab contents would follow the same pattern */}
