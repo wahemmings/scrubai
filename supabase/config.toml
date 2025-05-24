@@ -2,7 +2,6 @@
 # A string used to distinguish different Supabase projects on the same host. Defaults to the working
 # directory name when running `supabase init`.
 project_id = "rysezrtqehpzonflkezr"
-app_id = "scrubai"
 
 [api]
 # Port to use for the API URL.
@@ -79,7 +78,3 @@ verify_jwt = true
 
 [functions.handle-subscription-webhook]
 verify_jwt = false
-
-# Configure Stripe webhook URL integrity verification
-[functions.handle-subscription-webhook.imports]
-stripe = "https://esm.sh/stripe@14.21.0"

@@ -249,10 +249,6 @@ export const secureUploadToCloudinary = async (file: File, signatureData: any) =
 
 // Upload file to server with secure Cloudinary process
 export const uploadToServer = async (file: File, jobId: string, user: any) => {
-  toast("Processing file", {
-    description: "Your file is being processed on our secure servers."
-  });
-  
   try {
     // Get upload signature from edge function
     console.log(`Getting upload signature for job ${jobId}`);

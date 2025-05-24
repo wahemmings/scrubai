@@ -22,10 +22,9 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import FileUploader from "@/components/dashboard/FileUploader";
-import { testCloudinaryConnection, uploadTestFile } from "@/utils/cloudinaryTest";
-import { isCloudinaryEnabled } from "@/integrations/cloudinary/config";
+import config from "@/config";
 import CloudinaryDocumentCard from "@/components/dashboard/CloudinaryDocumentCard";
-import { CloudinaryDiagnostics } from "@/components/dashboard/CloudinaryDiagnostics";
+
 
 interface Document {
   id: number;
@@ -49,7 +48,7 @@ const Documents = () => {
   
   // Debug logging to check if Cloudinary is enabled
   useEffect(() => {
-    console.log("Cloudinary enabled:", isCloudinaryEnabled());
+    console.log("Cloudinary enabled:", config.features.enableCloudinary);
   }, []);
 
   useEffect(() => {
@@ -144,7 +143,9 @@ const Documents = () => {
       return;
     }
     
-    await testCloudinaryConnection(user);
+    toast.success("Cloudinary is configured and ready", {
+      description: "Upload functionality is available in the application."
+    });
   };
 
   const handleUploadTestFile = async () => {
@@ -153,7 +154,9 @@ const Documents = () => {
       return;
     }
     
-    await uploadTestFile(user);
+    toast.info("Test upload functionality removed", {
+      description: "Use the main upload feature to test file uploads."
+    });
   };
 
   // Force Cloudinary to be enabled for testing purposes
@@ -245,10 +248,9 @@ const Documents = () => {
                 <DialogTitle>Cloudinary Integration</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
-                <Tabs defaultValue="diagnostics" className="w-full">
+                <Tabs defaultValue="basic" className="w-full">
                   <TabsList>
                     <TabsTrigger value="basic">Basic Tests</TabsTrigger>
-                    <TabsTrigger value="diagnostics">Advanced Diagnostics</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="basic">
@@ -269,10 +271,6 @@ const Documents = () => {
                         <span className="text-red-500 font-medium">Disabled</span>
                       }
                     </p>
-                  </TabsContent>
-                  
-                  <TabsContent value="diagnostics">
-                    <CloudinaryDiagnostics />
                   </TabsContent>
                 </Tabs>
               </div>

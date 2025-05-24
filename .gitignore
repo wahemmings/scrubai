@@ -12,6 +12,56 @@ dist
 dist-ssr
 *.local
 
+# Environment variables and secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# Cloudinary credentials and test files
+validate-cloudinary-secrets.js
+debug-credentials.js
+simple-test.cjs
+test-image-upload.cjs
+debug-api-secret.js
+test-upload-preset.cjs
+create-upload-preset.cjs
+test-direct-upload.cjs
+check-account.cjs
+comprehensive-credential-check.cjs
+test-new-credentials.cjs
+test-upload-flow.js
+test-upload-flow.cjs
+test-complete-flow.js
+debug-signature.js
+test-minimal-debug.js
+test-confirmed-credentials.js
+test-comprehensive-diagnosis.js
+test-correct-credentials-final.js
+test-upload-fix.js
+test-final-success.js
+debug-api-secret.cjs
+test-credential-diagnosis.js
+test-edge-function.js
+test-fresh-credentials.js
+test-real-upload.js
+test-unsigned-alternative.js
+test-unsigned-upload.cjs
+test-*.js
+test-*.cjs
+debug-*.js
+debug-*.cjs
+
+# Deployment and configuration files with credentials
+supabase-env-vars.txt
+DEPLOYMENT-GUIDE.md
+SIMPLE-DEPLOYMENT-STEPS.txt
+SUPABASE-DEPLOYMENT-UPDATED.md
+FINAL-STATUS-REPORT.md
+FRESH_CLOUDINARY_SETUP.md
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

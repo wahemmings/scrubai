@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, FileImage, FileSpreadsheet, File } from "lucide-react";
-import { getCloudinaryThumbnailUrl } from "@/integrations/cloudinary/config";
+import config from "@/config";
 
 interface CloudinaryDocumentCardProps {
   document: {
@@ -50,7 +50,7 @@ const CloudinaryDocumentCard: React.FC<CloudinaryDocumentCardProps> = ({
   const getThumbnailUrl = () => {
     if (!document.contentPath || !shouldShowThumbnail()) return null;
     
-    return getCloudinaryThumbnailUrl(document.contentPath);
+    return document.contentPath ? `https://res.cloudinary.com/${config.externalServices.cloudinary.cloudName}/image/upload/c_fit,h_150,w_200/${document.contentPath}` : '';
   };
 
   const thumbnailUrl = getThumbnailUrl();
