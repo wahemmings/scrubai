@@ -1,11 +1,10 @@
-
 // Application configuration
 const config = {
   // Supabase configuration
   supabase: {
-    url: import.meta.env.VITE_SUPABASE_URL || '',
-    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-    functionsUrl: import.meta.env.VITE_SUPABASE_FUNCTIONS_URL || ''
+    url: import.meta.env.VITE_SUPABASE_URL || 'https://rysezrtqehpzonflkezr.supabase.co',
+    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5c2V6cnRxZWhwem9uZmxrZXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NTk0NTIsImV4cCI6MjA2MzQzNTQ1Mn0.iuoDyOtcRhK3CpN1Sf48WGP8Y1YPuSm0SYQ250e1xJE',
+    functionsUrl: import.meta.env.VITE_SUPABASE_FUNCTIONS_URL || 'https://rysezrtqehpzonflkezr.supabase.co/functions/v1'
   },
   
   // API configuration
