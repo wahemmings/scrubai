@@ -1,4 +1,3 @@
-
 // Application configuration
 const config = {
   // Supabase configuration
